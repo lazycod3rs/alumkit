@@ -38,15 +38,28 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "VendorName\\Skeleton\\Tests\\": "tests/"
+            "VendorName\\Skeleton\\Tests\\": "tests/",
+            "Workbench\\App\\": "workbench/app/",
+            "Workbench\\Database\\Factories\\": "workbench/database/factories/",
+            "Workbench\\Database\\Seeders\\": "workbench/database/seeders/"
         }
     },
     "scripts": {
         "post-autoload-dump": [
+            "@clear",
+            "@prepare",
             "@composer run prepare"
         ],
         "prepare": [
             "@php vendor/bin/testbench package:discover --ansi"
+        ],
+        "build": [
+            "@php vendor/bin/testbench workbench:build --ansi"
+        ],
+        "serve": [
+            "Composer\\Config::disableProcessTimeout",
+            "@build",
+            "@php vendor/bin/testbench serve --ansi"
         ],
         "lint": [
             "vendor/bin/pint --parallel"
@@ -68,6 +81,9 @@
             "@lint:check",
             "@test:types",
             "@test:unit"
+        ],
+        "clear": [
+            "@php vendor/bin/testbench package:purge-skeleton --ansi"
         ]
     },
     "extra": {
