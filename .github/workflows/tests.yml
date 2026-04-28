@@ -55,7 +55,13 @@ jobs:
         run: composer lint:check
 
       - name: Type Coverage
+        if: runner.os != 'Windows'
         run: composer test:types
 
       - name: Test Suite
+        if: runner.os != 'Windows'
         run: composer test:unit
+
+      - name: Test Suite (Windows)
+        if: runner.os == 'Windows'
+        run: vendor/bin/pest
