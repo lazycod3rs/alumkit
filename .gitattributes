@@ -9,3 +9,6 @@
 /phpstan.neon.dist  export-ignore
 /pint.json          export-ignore
 /workbench          export-ignore
+/docs               export-ignore
+/mkdocs.yml         export-ignore
+/site               export-ignore

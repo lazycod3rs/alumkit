@@ -21,6 +21,28 @@ This repo can be used to scaffold a Laravel package. Follow these steps to get s
 4. Run `composer build` to (re)build the bundled workbench app under `workbench/`.
 5. Run `composer serve` to boot the workbench app at `http://localhost:8000` and test your package end-to-end.
 6. Have fun creating your package.
+
+## Manual GitHub Setup
+
+Some GitHub automation needs repository-level settings after you create your package repository:
+
+1. Enable GitHub Pages and set the source to GitHub Actions so `.github/workflows/docs.yml` can deploy the MkDocs site.
+2. Enable auto-merge and allow GitHub Actions to create and merge pull requests so Dependabot minor and patch updates can be merged automatically.
+3. Create the labels used by generated release notes if you want clean categories: `breaking`, `enhancement`, `bug`, `documentation`, `dependencies`, `maintenance`, `skip-changelog`, and `duplicate`.
+4. Review branch protection rules for `main`. The changelog workflow needs GitHub Actions to be allowed to commit `CHANGELOG.md` after a release is published.
+
+No additional repository secrets are required; the workflows use GitHub's built-in `GITHUB_TOKEN`.
+
+## Previewing Documentation Locally
+
+The documentation scaffold uses MkDocs Material. To preview it locally, install MkDocs Material and run the development server:
+
+```bash
+pip install mkdocs-material
+mkdocs serve
+```
+
+Then open `http://127.0.0.1:8000` in your browser.
 ---
 <!--/delete-->
 
