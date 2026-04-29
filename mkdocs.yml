@@ -5,7 +5,17 @@ repo_url: https://github.com/:vendor_slug/:package_slug
 repo_name: :vendor_slug/:package_slug
 
 theme:
+  # Customize Material for MkDocs: https://squidfunk.github.io/mkdocs-material/setup/changing-the-colors/
   name: material
+  palette:
+    - scheme: default
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - scheme: slate
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
 
 nav:
   - Overview: index.md
