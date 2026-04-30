@@ -1,5 +1,5 @@
 ---
-name: skeleton
+name: skeleton-development
 description: >
   Configure and apply the :package_name package in Laravel applications.
 license: MIT

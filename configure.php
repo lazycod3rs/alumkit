@@ -87,6 +87,10 @@ final class LaravelPackageSkeletonConfigurator
         info('Features: '.implode(', ', array_map(fn (string $key): string => self::features()[$key], $features)));
         info('Tools: '.implode(', ', array_map(fn (string $key): string => self::tools()[$key], $tools)));
 
+        if (($github['mode'] ?? 'skip') === 'create') {
+            info('GitHub URL: https://github.com/'.$metadata['vendor_slug'].'/'.$metadata['package_slug']);
+        }
+
         if (! confirm('Apply these changes?', true)) {
             warning('Configuration cancelled. No files were changed.');
 
@@ -526,6 +530,7 @@ final class LaravelPackageSkeletonConfigurator
         self::renamePath($root, 'src/Console/Commands/SkeletonCommand.php', 'src/Console/Commands/'.$className.'Command.php', $summary);
         self::renamePath($root, 'config/skeleton.php', 'config/'.$packageSlug.'.php', $summary);
         self::renamePath($root, 'routes/skeleton.php', 'routes/'.$packageSlug.'.php', $summary);
+        self::renamePath($root, 'resources/boost/skills/skeleton', 'resources/boost/skills/'.$packageSlug.'-development', $summary);
 
         foreach (glob($root.'/database/migrations/*create_skeleton_placeholder_table.php') ?: [] as $migration) {
             $destination = dirname($migration).'/'.str_replace('create_skeleton_placeholder_table', 'create_'.$tableName.'_table', basename($migration));
