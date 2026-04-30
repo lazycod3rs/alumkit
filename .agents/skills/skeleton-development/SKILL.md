@@ -18,7 +18,8 @@ Evolve the starter kit without making it less useful for future package authors.
 2. Keep starter guidance minimal and split skeleton-maintenance rules from package-author rules.
 3. Use temporary phase scaffold tests when proving repository shape, file parity, or generated scaffolding; delete those tests before final validation.
 4. Keep `.claude/skills` and `.agents/skills` mirrored when adding or editing local skills.
-5. Keep development-time authoring files out of Composer dist archives with `.gitattributes` when they are not runtime package files.
+5. Keep `configure.php` feature and tool pruning maps aligned with the service provider, Composer metadata, README sections, docs, AI guidance, skills, and publishable files.
+6. Keep development-time authoring files out of Composer dist archives with `.gitattributes` when they are not runtime package files.
 
 ## References
 
@@ -35,6 +36,7 @@ Evolve the starter kit without making it less useful for future package authors.
 - Add or rename a local skill by updating both agent ecosystems, front matter names, root guidance, and any scaffold consistency checks.
 - Add temporary Phase tests to lock down generated file shape, run them to prove the change, then delete them before the final `composer test`.
 - Update placeholder-sensitive docs by preserving delete-fence content that should disappear after configuration.
+- When adding a selectable package feature, add both the starter files and the matching configure pruning behavior so package authors can opt out cleanly.
 
 ## Anti-Patterns
 

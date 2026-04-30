@@ -13,14 +13,30 @@
 
 <!--delete-->
 ---
+## What This Skeleton Provides
+
+- Interactive one-time package configuration with `php ./configure.php`.
+- Laravel-native service provider wiring for config, routes, views, translations, migrations, assets, commands, and facades.
+- Pest, Larastan, Pint, Testbench, type coverage, and workbench scripts ready for package development.
+- Optional maintenance tooling for Dependabot auto-merge, changelog automation, funding, security policy, issue templates, and MkDocs documentation.
+- AI guidance and reusable local skills for package authors.
+
 This repo can be used to scaffold a Laravel package. Follow these steps to get started:
 
-1. Press the "Use this template" button at the top of this repo to create a new repo with the contents of this skeleton.
-2. Run `php ./configure.php` to replace every `:token` placeholder across the package.
+1. Press the "Use this template" button at the top of this repo to create a new repo with the contents of this skeleton, or clone it directly:
+
+```bash
+git clone https://github.com/laravel/package-skeleton.git my-package
+cd my-package
+```
+
+2. Run `composer setup` to install dependencies and start the interactive package configuration.
 3. Run `composer test` to confirm the toolchain (PHPStan, Pint, Pest type coverage, Pest) is green.
 4. Run `composer build` to (re)build the bundled workbench app under `workbench/`.
 5. Run `composer serve` to boot the workbench app at `http://localhost:8000` and test your package end-to-end.
 6. Have fun creating your package.
+
+If you prefer to run the steps manually, run `composer install` first and then `php ./configure.php`.
 
 ## Manual GitHub Setup
 

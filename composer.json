@@ -24,6 +24,7 @@
     "require-dev": {
         "larastan/larastan": "^3.9",
         "laravel/pint": "^1.29",
+        "laravel/prompts": "^0.3",
         "nunomaduro/pao": "^1.0",
         "orchestra/testbench": "^10.0||^11.0",
         "pestphp/pest": "^4.6",
@@ -45,6 +46,10 @@
         }
     },
     "scripts": {
+        "setup": [
+            "composer install",
+            "@php configure.php"
+        ],
         "post-autoload-dump": [
             "@clear",
             "@prepare",

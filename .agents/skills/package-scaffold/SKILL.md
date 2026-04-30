@@ -18,7 +18,8 @@ Add package features in the right place while keeping package names, namespaces,
 2. Identify whether the request touches commands, migrations, routes, config, views, assets, package shape changes, tests, docs, compatibility, or release flow.
 3. Use Laravel-native package conventions and keep namespaces, publish tags, docs, config keys, URLs, and badges consistent with the configured package.
 4. Use `package-service-provider` for provider wiring, `package-testing` for coverage, `package-docs` for docs, `package-compatibility` for matrix-sensitive changes, and `package-release` for release tasks.
-5. Add only the files needed for the requested capability and validate with the narrowest relevant command before broader checks.
+5. If this starter has not been configured yet, preserve `configure.php` mappings when adding or removing selectable capabilities so opt-out cleanup stays accurate.
+6. Add only the files needed for the requested capability and validate with the narrowest relevant command before broader checks.
 
 ## References
 
