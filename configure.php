@@ -259,6 +259,7 @@ final class LaravelPackageSkeletonConfigurator
         self::renamePackageFiles($root, $metadata, $summary);
         self::updateComposerJson($root, $metadata, $selectedFeatures, $summary);
         self::removeReadmeDeleteFence($root, $summary);
+        self::copyAgentSkillsToClaude($root, $summary);
 
         foreach (array_diff(self::featureKeys(), $selectedFeatures) as $feature) {
             self::removeFeature($root, $feature, $metadata, $summary);
@@ -268,6 +269,7 @@ final class LaravelPackageSkeletonConfigurator
             self::removeTool($root, $tool, $summary);
         }
 
+        self::copyAgentsMarkdownToClaude($root, $summary);
         self::cleanupEmptyDirectories($root, $summary);
 
         if (($github['mode'] ?? 'skip') === 'create') {
@@ -664,7 +666,6 @@ final class LaravelPackageSkeletonConfigurator
                 self::removeProviderLine($provider, 'Command;', $summary, $root),
                 self::removeLinesContaining($readme, ['command', 'Command'], $summary, $root),
                 self::removeLinesContaining($root.'/AGENTS.md', ['command', 'Command'], $summary, $root),
-                self::removeLinesContaining($root.'/CLAUDE.md', ['command', 'Command'], $summary, $root),
             ],
             'facade' => fn () => [
                 self::removePath($root, 'src/Facades', $summary),
@@ -674,7 +675,6 @@ final class LaravelPackageSkeletonConfigurator
                 self::removePath($root, 'resources/boost/skills', $summary),
                 self::removeLinesContaining($readme, ['Boost', 'boost'], $summary, $root),
                 self::removeLinesContaining($root.'/AGENTS.md', ['Boost', 'boost'], $summary, $root),
-                self::removeLinesContaining($root.'/CLAUDE.md', ['Boost', 'boost'], $summary, $root),
             ],
         ];
 
@@ -713,7 +713,6 @@ final class LaravelPackageSkeletonConfigurator
                 self::removePath($root, '.github/workflows/docs.yml', $summary),
                 self::removeLinesContaining($readme, ['documentation', 'Documentation', 'MkDocs', 'GitHub Pages'], $summary, $root),
                 self::removeLinesContaining($root.'/AGENTS.md', ['MkDocs', 'docs/'], $summary, $root),
-                self::removeLinesContaining($root.'/CLAUDE.md', ['MkDocs', 'docs/'], $summary, $root),
             ],
         ];
 
@@ -848,6 +847,57 @@ final class LaravelPackageSkeletonConfigurator
         rename($source, $destination);
         $summary['removed_paths'][] = $from;
         $summary['modified_files'][] = $to;
+    }
+
+    /** @param array<string, mixed> $summary */
+    private static function copyAgentSkillsToClaude(string $root, array &$summary): void
+    {
+        $source = $root.'/.agents/skills';
+        $destination = $root.'/.claude/skills';
+
+        if (! is_dir($source)) {
+            return;
+        }
+
+        self::removePath($root, '.claude/skills', $summary);
+
+        $iterator = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($source, RecursiveDirectoryIterator::SKIP_DOTS),
+            RecursiveIteratorIterator::SELF_FIRST,
+        );
+
+        foreach ($iterator as $item) {
+            $target = $destination.'/'.substr($item->getPathname(), strlen($source) + 1);
+
+            if ($item->isDir()) {
+                if (! is_dir($target)) {
+                    mkdir($target, 0755, true);
+                }
+
+                continue;
+            }
+
+            if (! is_dir(dirname($target))) {
+                mkdir(dirname($target), 0755, true);
+            }
+
+            copy($item->getPathname(), $target);
+            self::trackModified($root, $target, $summary);
+        }
+    }
+
+    /** @param array<string, mixed> $summary */
+    private static function copyAgentsMarkdownToClaude(string $root, array &$summary): void
+    {
+        $source = $root.'/AGENTS.md';
+        $destination = $root.'/CLAUDE.md';
+
+        if (! file_exists($source)) {
+            return;
+        }
+
+        copy($source, $destination);
+        self::trackModified($root, $destination, $summary);
     }
 
     /** @param array<string, mixed> $summary */

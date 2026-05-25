@@ -17,23 +17,23 @@ Evolve the starter kit without making it less useful for future package authors.
 1. Preserve generic placeholders such as `:author_name`, `:package_name`, `:vendor_slug`, and `:package_slug` until the configure flow replaces them.
 2. Keep starter guidance minimal and split skeleton-maintenance rules from package-author rules.
 3. Use temporary phase scaffold tests when proving repository shape, file parity, or generated scaffolding; delete those tests before final validation.
-4. Keep `.claude/skills` and `.agents/skills` mirrored when adding or editing local skills.
+4. Maintain package guidance only in `AGENTS.md` and local skills only in `.agents/skills`; `configure.php` copies them to `CLAUDE.md` and `.claude/skills` during package configuration.
 5. Keep `configure.php` feature and tool pruning maps aligned with the service provider, Composer metadata, README sections, docs, AI guidance, skills, and publishable files.
 6. Keep development-time authoring files out of Composer dist archives with `.gitattributes` when they are not runtime package files.
 
 ## References
 
 - `AGENTS.md`
-- `CLAUDE.md`
+- Generated `CLAUDE.md`
 - `.agents/skills/`
-- `.claude/skills/`
+- Generated `.claude/skills/`
 - `configure.php`
 - `.gitattributes`
 - `PLAN.md`, `REQS.md`, and `phases/` when present
 
 ## Examples
 
-- Add or rename a local skill by updating both agent ecosystems, front matter names, root guidance, and any scaffold consistency checks.
+- Add or rename local guidance under `AGENTS.md` or `.agents/skills`, then update front matter names, root guidance, and any scaffold consistency checks.
 - Add temporary Phase tests to lock down generated file shape, run them to prove the change, then delete them before the final `composer test`.
 - Update placeholder-sensitive docs by preserving delete-fence content that should disappear after configuration.
 - When adding a selectable package feature, add both the starter files and the matching configure pruning behavior so package authors can opt out cleanly.
