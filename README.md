@@ -7,7 +7,7 @@ This repository is a starter for building Laravel packages. It includes a one-ti
 - Interactive one-time package configuration with `php ./configure.php`.
 - Laravel-native service provider wiring for config, routes, views, translations, migrations, assets, commands, and facades.
 - Pest, Larastan, Pint, Testbench, type coverage, and workbench scripts ready for package development.
-- Optional maintenance tooling for Dependabot auto-merge, changelog automation, funding, security policy, issue templates, and MkDocs documentation.
+- Optional maintenance tooling for Dependabot auto-merge, changelog automation, funding, security policy, issue templates, and VitePress documentation.
 - AI guidance and reusable local skills for package authors.
 
 ## Getting Started
@@ -34,7 +34,7 @@ During configuration, `README_PACKAGE.md` is customized and moved to `README.md`
 
 Some GitHub automation needs repository-level settings after you create your package repository:
 
-1. Enable GitHub Pages and set the source to GitHub Actions so `.github/workflows/docs.yml` can deploy the MkDocs site.
+1. Enable GitHub Pages and set the source to GitHub Actions so `.github/workflows/docs.yml` can deploy the VitePress site.
 2. Enable auto-merge and allow GitHub Actions to create and merge pull requests so Dependabot minor and patch updates can be merged automatically.
 3. Create the labels used by generated release notes if you want clean categories: `breaking`, `enhancement`, `bug`, `documentation`, `dependencies`, `maintenance`, `skip-changelog`, and `duplicate`.
 4. Review branch protection rules for `main`. The changelog workflow needs GitHub Actions to be allowed to commit `CHANGELOG.md` after a release is published.
@@ -43,11 +43,11 @@ No additional repository secrets are required; the workflows use GitHub's built-
 
 ## Previewing Documentation Locally
 
-The documentation scaffold uses MkDocs Material. To preview it locally, install MkDocs Material and run the development server:
+The documentation scaffold uses VitePress. To preview it locally, install npm dependencies and run the development server:
 
 ```bash
-pip install mkdocs-material
-mkdocs serve
+npm install
+npm run docs:dev
 ```
 
-Then open `http://127.0.0.1:8000` in your browser.
+Then open the local URL shown by VitePress, usually `http://localhost:5173/:package_slug/`.

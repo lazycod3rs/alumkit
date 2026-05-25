@@ -335,7 +335,7 @@ class LaravelPackageSkeletonConfigurator
         $steps = [];
 
         if (in_array('documentation', $selectedTools, true)) {
-            $steps[] = 'Enable GitHub Pages and set the source to GitHub Actions so `.github/workflows/docs.yml` can deploy the MkDocs site.';
+            $steps[] = 'Enable GitHub Pages and set the source to GitHub Actions so `.github/workflows/docs.yml` can deploy the VitePress site.';
         }
 
         if (in_array('dependabot_auto_merge', $selectedTools, true)) {
@@ -691,10 +691,12 @@ class LaravelPackageSkeletonConfigurator
             ],
             'documentation' => fn () => [
                 self::removePath($root, 'docs', $summary),
-                self::removePath($root, 'mkdocs.yml', $summary),
+                self::removePath($root, 'package.json', $summary),
                 self::removePath($root, '.github/workflows/docs.yml', $summary),
-                self::removeLinesContaining($readme, ['documentation', 'Documentation', 'MkDocs', 'GitHub Pages'], $summary, $root),
-                self::removeLinesContaining($root.'/AGENTS.md', ['MkDocs', 'docs/'], $summary, $root),
+                self::removeLinesContaining($readme, ['documentation', 'Documentation', 'VitePress', 'GitHub Pages'], $summary, $root),
+                self::removeLinesContaining($root.'/AGENTS.md', ['VitePress', 'docs/'], $summary, $root),
+                self::removeLinesContaining($root.'/.gitignore', ['docs/.vitepress/dist', 'package-lock.json', 'pnpm-lock.yaml', 'bun.lock'], $summary, $root),
+                self::removeLinesContaining($root.'/.gitattributes', ['/docs', '/package.json', 'docs/.vitepress/dist'], $summary, $root),
             ],
         ];
 
