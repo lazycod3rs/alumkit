@@ -255,10 +255,10 @@ final class LaravelPackageSkeletonConfigurator
             'manual_steps' => self::manualSteps($selectedTools),
         ];
 
+        self::replacePackageReadme($root, $summary);
         self::replacePlaceholders($root, $metadata, $summary);
         self::renamePackageFiles($root, $metadata, $summary);
         self::updateComposerJson($root, $metadata, $selectedFeatures, $summary);
-        self::removeReadmeDeleteFence($root, $summary);
         self::copyAgentSkillsToClaude($root, $summary);
 
         foreach (array_diff(self::featureKeys(), $selectedFeatures) as $feature) {
@@ -360,7 +360,7 @@ final class LaravelPackageSkeletonConfigurator
     {
         $errors = [];
 
-        foreach (['composer.json', 'src/SkeletonServiceProvider.php', 'README.md'] as $path) {
+        foreach (['composer.json', 'src/SkeletonServiceProvider.php', 'README.md', 'README_PACKAGE.md'] as $path) {
             if (! file_exists($root.'/'.$path)) {
                 $errors[] = "Expected skeleton file [{$path}] was not found.";
             }
@@ -601,24 +601,6 @@ final class LaravelPackageSkeletonConfigurator
         self::trackModified($root, $path, $summary);
     }
 
-    /** @param array<string, mixed> $summary */
-    private static function removeReadmeDeleteFence(string $root, array &$summary): void
-    {
-        $path = $root.'/README.md';
-
-        if (! file_exists($path)) {
-            return;
-        }
-
-        $contents = (string) file_get_contents($path);
-        $updated = preg_replace('/<!--delete-->.*?<!--\/delete-->\s*/s', '', $contents) ?? $contents;
-
-        if ($updated !== $contents) {
-            file_put_contents($path, $updated);
-            self::trackModified($root, $path, $summary);
-        }
-    }
-
     /**
      * @param  array<string, mixed>  $metadata
      * @param  array<string, mixed>  $summary
@@ -847,6 +829,17 @@ final class LaravelPackageSkeletonConfigurator
         rename($source, $destination);
         $summary['removed_paths'][] = $from;
         $summary['modified_files'][] = $to;
+    }
+
+    /** @param array<string, mixed> $summary */
+    private static function replacePackageReadme(string $root, array &$summary): void
+    {
+        if (! file_exists($root.'/README_PACKAGE.md')) {
+            return;
+        }
+
+        self::removePath($root, 'README.md', $summary);
+        self::renamePath($root, 'README_PACKAGE.md', 'README.md', $summary);
     }
 
     /** @param array<string, mixed> $summary */
