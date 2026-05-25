@@ -272,6 +272,17 @@ class LaravelPackageSkeletonConfigurator
         self::copyAgentsMarkdownToClaude($root, $summary);
         self::cleanupEmptyDirectories($root, $summary);
 
+        $formatResult = self::runCommand([PHP_BINARY, 'vendor/bin/pint', '--quiet'], $root);
+
+        if (! $formatResult['success']) {
+            return [
+                'success' => false,
+                'errors' => ['Code formatting failed: '.$formatResult['output']],
+                'github' => $summary['github'],
+                'summary' => $summary,
+            ];
+        }
+
         if (($github['mode'] ?? 'skip') === 'create') {
             $githubResult = self::createGitHubRepository($root, $metadata, $github, $deleteConfigure, $summary);
             $summary['github'] = $githubResult;
@@ -429,7 +440,7 @@ class LaravelPackageSkeletonConfigurator
                 continue;
             }
 
-            $updated = str_replace(array_keys($replacements), array_values($replacements), $contents);
+            $updated = strtr($contents, $replacements);
 
             if ($updated === $contents) {
                 continue;
@@ -616,6 +627,7 @@ class LaravelPackageSkeletonConfigurator
                 self::removeProviderCallAndMethod($provider, 'bootConfig', $summary, $root),
                 self::removeProviderLine($provider, 'mergeConfigFrom', $summary, $root),
                 self::removeMarkdownSection($readme, 'Publishing the Configuration File', $summary, $root),
+                self::removeLinesContaining($root.'/phpstan.neon.dist', ['        - config'], $summary, $root),
             ],
             'routes' => fn () => [
                 self::removePath($root, 'routes', $summary),
@@ -655,6 +667,8 @@ class LaravelPackageSkeletonConfigurator
             ],
             'boost_skill' => fn () => [
                 self::removePath($root, 'resources/boost/skills', $summary),
+                self::removePath($root, '.agents/skills/package-generate-skill', $summary),
+                self::removePath($root, '.claude/skills/package-generate-skill', $summary),
                 self::removeLinesContaining($readme, ['Boost', 'boost'], $summary, $root),
                 self::removeLinesContaining($root.'/AGENTS.md', ['Boost', 'boost'], $summary, $root),
             ],
@@ -692,6 +706,8 @@ class LaravelPackageSkeletonConfigurator
             'documentation' => fn () => [
                 self::removePath($root, 'docs', $summary),
                 self::removePath($root, 'package.json', $summary),
+                self::removePath($root, '.agents/skills/package-docs', $summary),
+                self::removePath($root, '.claude/skills/package-docs', $summary),
                 self::removePath($root, '.github/workflows/docs.yml', $summary),
                 self::removeLinesContaining($readme, ['documentation', 'Documentation', 'VitePress', 'GitHub Pages'], $summary, $root),
                 self::removeLinesContaining($root.'/AGENTS.md', ['VitePress', 'docs/'], $summary, $root),
