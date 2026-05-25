@@ -711,6 +711,8 @@ class LaravelPackageSkeletonConfigurator
                 self::removePath($root, '.github/workflows/docs.yml', $summary),
                 self::removeLinesContaining($readme, ['documentation', 'Documentation', 'VitePress', 'GitHub Pages'], $summary, $root),
                 self::removeLinesContaining($root.'/AGENTS.md', ['VitePress', 'docs/'], $summary, $root),
+                self::removeLinesContaining($root.'/.agents/skills/package-generate-skill/SKILL.md', ['docs/'], $summary, $root),
+                self::removeLinesContaining($root.'/.claude/skills/package-generate-skill/SKILL.md', ['docs/'], $summary, $root),
                 self::removeLinesContaining($root.'/.gitignore', ['docs/.vitepress/dist', 'package-lock.json', 'pnpm-lock.yaml', 'bun.lock'], $summary, $root),
                 self::removeLinesContaining($root.'/.gitattributes', ['/docs', '/package.json', 'docs/.vitepress/dist'], $summary, $root),
             ],
