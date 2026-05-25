@@ -5,12 +5,6 @@ export default defineConfig({
   description: ':package_description',
   base: '/:package_slug/',
   themeConfig: {
-    nav: [
-      { text: 'Overview', link: '/' },
-      { text: 'Installation', link: '/installation' },
-      { text: 'Usage', link: '/usage' },
-      { text: 'Testing', link: '/testing' },
-    ],
     sidebar: [
       { text: 'Overview', link: '/' },
       { text: 'Installation', link: '/installation' },
