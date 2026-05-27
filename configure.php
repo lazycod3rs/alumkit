@@ -648,6 +648,7 @@ class LaravelPackageSkeletonConfigurator
                 self::removePath($root, 'routes', $summary),
                 self::removeProviderCallAndMethod($provider, 'bootRoutes', $summary, $root),
                 self::removeLinesContaining($readme, ['route', 'Route'], $summary, $root),
+                self::removeLinesContaining($root.'/phpstan.neon.dist', ['        - routes'], $summary, $root),
             ],
             'views' => fn () => [
                 self::removePath($root, 'resources/views', $summary),
@@ -667,6 +668,7 @@ class LaravelPackageSkeletonConfigurator
                 self::removeMarkdownSection($readme, 'Publishing and Running the Migrations', $summary, $root),
                 self::removeLinesContaining($docsInstallation, ['-migrations'], $summary, $root),
                 self::removeMarkdownSection($docsInstallation, 'Running Migrations', $summary, $root),
+                self::removeLinesContaining($root.'/phpstan.neon.dist', ['        - database'], $summary, $root),
             ],
             'assets' => fn () => [
                 self::removePath($root, 'public', $summary),
