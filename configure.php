@@ -196,6 +196,16 @@ class LaravelPackageSkeletonConfigurator
         ];
     }
 
+    /** @return array{status: string, message: string, created_repositories: list<string>} */
+    private static function defaultGithubResult(): array
+    {
+        return [
+            'status' => 'skipped',
+            'message' => 'GitHub repository creation was skipped.',
+            'created_repositories' => [],
+        ];
+    }
+
     /** @return array<string, string> */
     private static function features(): array
     {
@@ -312,6 +322,7 @@ class LaravelPackageSkeletonConfigurator
             return [
                 'success' => false,
                 'errors' => $errors,
+                'github' => self::defaultGithubResult(),
                 'summary' => [],
             ];
         }
@@ -324,11 +335,7 @@ class LaravelPackageSkeletonConfigurator
             'selected_tools' => $selectedTools,
             'removed_paths' => [],
             'modified_files' => [],
-            'github' => [
-                'status' => 'skipped',
-                'message' => 'GitHub repository creation was skipped.',
-                'created_repositories' => [],
-            ],
+            'github' => self::defaultGithubResult(),
             'manual_steps' => self::manualSteps($selectedTools),
         ];
 
@@ -1192,7 +1199,7 @@ class LaravelPackageSkeletonConfigurator
 
         if (! is_dir($path)) {
             self::chisel()->file($relativePath)->delete();
-            self::$summary['removed_paths'][] = $relativePath;
+            self::trackRemoved($relativePath);
 
             return;
         }
@@ -1213,7 +1220,7 @@ class LaravelPackageSkeletonConfigurator
 
         rmdir($path);
 
-        self::$summary['removed_paths'][] = $relativePath;
+        self::trackRemoved($relativePath);
     }
 
     private static function chisel(): Chisel
@@ -1242,8 +1249,8 @@ class LaravelPackageSkeletonConfigurator
         }
 
         rename($source, $destination);
-        self::$summary['removed_paths'][] = $from;
-        self::$summary['modified_files'][] = $to;
+        self::trackRemoved($from);
+        self::trackModified($to);
     }
 
     private static function replacePackageReadme(): void
@@ -1335,7 +1342,7 @@ class LaravelPackageSkeletonConfigurator
                 ) === 0
             ) {
                 rmdir($path);
-                self::$summary['removed_paths'][] = $relativePath;
+                self::trackRemoved($relativePath);
             }
         }
     }
@@ -1614,16 +1621,16 @@ class LaravelPackageSkeletonConfigurator
 
     private static function relativePath(string $path, ?string $dir = null): string
     {
-        $dir ??= self::$rootDir;
+        $dir = str_replace('\\', '/', $dir ?? self::$rootDir);
+        $path = str_replace('\\', '/', $path);
 
-        return str_replace(
-            '\\',
-            '/',
-            ltrim(
-                substr($path, strlen($dir)),
-                DIRECTORY_SEPARATOR,
-            ),
-        );
+        if (! str_starts_with($path, $dir.'/')) {
+            return ltrim(preg_replace('#^\./#', '', $path) ?? $path, '/');
+        }
+
+        $relativePath = ltrim(substr($path, strlen($dir)), '/');
+
+        return preg_replace('#^\./#', '', $relativePath) ?? $relativePath;
     }
 }
 
