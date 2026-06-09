@@ -324,29 +324,25 @@ class LaravelPackageSkeletonConfigurator
                 'label' => 'Author email',
                 'hint' => 'Used in composer.json package author metadata.',
             ],
-            'author_username' => [
-                'label' => 'Author GitHub username',
-                'hint' => 'Used for the README credits link.',
-            ],
             'vendor_slug' => [
-                'label' => 'GitHub / Packagist user',
+                'label' => 'GitHub / Packagist username',
                 'hint' => 'Use the GitHub user or organization that will own the repository and Packagist package.',
+            ],
+            'package_name' => [
+                'label' => 'Package name (human readable)',
+                'hint' => 'Used as the human-readable package name in README and docs.',
             ],
             'vendor_namespace' => [
                 'label' => 'Vendor namespace',
                 'hint' => 'Used as the top-level PHP namespace, for example VendorName\\PackageName.',
             ],
-            'package_name' => [
-                'label' => 'Package name',
-                'hint' => 'Used as the human-readable package name in README and docs.',
-            ],
-            'package_slug' => [
-                'label' => 'Package slug',
-                'hint' => 'Used in composer package names, publish tags, config files, routes, and URLs.',
-            ],
             'class_name' => [
                 'label' => 'Main class name',
                 'hint' => 'Used for the main class, service provider, facade, and command class names.',
+            ],
+            'package_slug' => [
+                'label' => 'Package identifier',
+                'hint' => 'Used in composer package names, publish tags, config files, routes, and URLs.',
             ],
             'package_description' => [
                 'label' => 'Package description',
@@ -378,6 +374,7 @@ class LaravelPackageSkeletonConfigurator
         }
 
         self::$metadata['vendor_slug'] = self::slug(self::$metadata['vendor_slug']);
+        self::$metadata['author_username'] ??= self::$metadata['vendor_slug'];
 
         self::$summary = [
             'metadata' => self::$metadata,
@@ -470,7 +467,6 @@ class LaravelPackageSkeletonConfigurator
     private static function metadataDefault(string $key, array $defaults): string
     {
         return match (true) {
-            $key === 'vendor_slug' && self::hasMetadata('author_username') => self::slug(self::$metadata['author_username']),
             $key === 'package_slug' && self::hasMetadata('package_name') => self::slug(self::$metadata['package_name']),
             $key === 'class_name' && self::hasMetadata('package_name') => self::studly(self::slug(self::$metadata['package_name'])),
             default => $defaults[$key],
