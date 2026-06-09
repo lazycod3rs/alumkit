@@ -1627,7 +1627,7 @@ class LaravelPackageSkeletonConfigurator
             'package_name' => self::headline($packageSlug),
             'package_slug' => $packageSlug,
             'class_name' => $className,
-            'package_description' => 'A Laravel package.',
+            'package_description' => '',
         ];
     }
 
