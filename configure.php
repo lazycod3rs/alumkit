@@ -3,6 +3,7 @@
 
 declare(strict_types=1);
 
+use Laravel\AgentDetector\AgentDetector;
 use Laravel\Chisel\Chisel;
 
 use function Laravel\Prompts\confirm;
@@ -51,10 +52,17 @@ class LaravelPackageSkeletonConfigurator
         }
 
         if (! self::dependenciesAreInstalled()) {
-            fwrite(
-                STDERR,
-                'Composer dependencies are not installed. Run `composer install` before `php ./configure.php`.'.PHP_EOL,
-            );
+            $message = 'Composer dependencies are not installed. Run `composer install` before `php ./configure.php`.';
+
+            if (self::hasNonInteractiveFlags()) {
+                self::writeJson([
+                    'message' => $message,
+                    'success' => false,
+                    'errors' => [$message],
+                ]);
+            } else {
+                fwrite(STDERR, $message.PHP_EOL);
+            }
 
             return self::FAILURE;
         }
@@ -70,7 +78,9 @@ class LaravelPackageSkeletonConfigurator
 
     private static function dependenciesAreInstalled(): bool
     {
-        return function_exists('Laravel\Prompts\intro') && class_exists(Chisel::class);
+        return function_exists('Laravel\Prompts\intro') &&
+            class_exists(AgentDetector::class) &&
+            class_exists(Chisel::class);
     }
 
     private static function runInteractive(array $defaults): int
@@ -148,17 +158,35 @@ class LaravelPackageSkeletonConfigurator
             'tools' => self::toolKeys(),
         ]);
 
-        if (! $result['success']) {
-            foreach ($result['errors'] as $message) {
-                fwrite(STDERR, (string) $message.PHP_EOL);
-            }
+        self::writeJson(self::nonInteractivePayload($result));
 
-            return self::FAILURE;
-        }
+        return $result['success'] ? self::SUCCESS : self::FAILURE;
+    }
 
-        fwrite(STDOUT, 'Package configured successfully.'.PHP_EOL);
+    /**
+     * @param  array{success: bool, errors: list<string>, github?: array<string, mixed>, summary?: array<string, mixed>}  $result
+     * @return array{message: string, success: bool, errors: list<string>, github: array<string, mixed>, summary: array<string, mixed>}
+     */
+    private static function nonInteractivePayload(array $result): array
+    {
+        $success = $result['success'];
 
-        return self::SUCCESS;
+        return [
+            'message' => $success ? 'Package configured successfully.' : 'Package configuration failed.',
+            'success' => $success,
+            'errors' => $result['errors'],
+            'github' => $result['github'] ?? self::defaultGithubResult(),
+            'summary' => $result['summary'] ?? [],
+        ];
+    }
+
+    /** @param  array<string, mixed>  $payload */
+    private static function writeJson(array $payload): void
+    {
+        fwrite(
+            STDOUT,
+            json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES).PHP_EOL,
+        );
     }
 
     private static function isGithubMode(string $mode): bool
@@ -811,6 +839,7 @@ class LaravelPackageSkeletonConfigurator
         }
 
         unset(
+            $composer['require-dev']['laravel/agent-detector'],
             $composer['require-dev']['laravel/chisel'],
             $composer['require-dev']['laravel/prompts'],
         );
@@ -1544,9 +1573,19 @@ class LaravelPackageSkeletonConfigurator
 
     private static function isNonInteractive(): bool
     {
+        return self::hasNonInteractiveFlags() || self::agentDetected();
+    }
+
+    private static function hasNonInteractiveFlags(): bool
+    {
         return getenv('COMPOSER_NO_INTERACTION') === '1' ||
             in_array('--no-interaction', $_SERVER['argv'] ?? []) ||
             in_array('-n', $_SERVER['argv'] ?? []);
+    }
+
+    private static function agentDetected(): bool
+    {
+        return AgentDetector::detect()->isAgent;
     }
 
     /** @return array<string, string> */
