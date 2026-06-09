@@ -1474,7 +1474,7 @@ class LaravelPackageSkeletonConfigurator
 
     private static function isNonInteractive(): bool
     {
-        return self::hasNonInteractiveFlags() || self::agentDetected();
+        return self::hasNonInteractiveFlags() || AgentDetector::detect()->isAgent;
     }
 
     private static function hasNonInteractiveFlags(): bool
@@ -1482,11 +1482,6 @@ class LaravelPackageSkeletonConfigurator
         return getenv('COMPOSER_NO_INTERACTION') === '1' ||
             in_array('--no-interaction', $_SERVER['argv'] ?? []) ||
             in_array('-n', $_SERVER['argv'] ?? []);
-    }
-
-    private static function agentDetected(): bool
-    {
-        return AgentDetector::detect()->isAgent;
     }
 
     /** @return array<string, string> */
