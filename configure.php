@@ -749,34 +749,19 @@ class LaravelPackageSkeletonConfigurator
         $packageSlug = self::$metadata['package_slug'];
         $tableName = self::snake($packageSlug).'_placeholder';
 
-        self::renamePath(
-            'src/Skeleton.php',
-            'src/'.$className.'.php',
-        );
-        self::renamePath(
-            'src/SkeletonServiceProvider.php',
-            'src/'.$className.'ServiceProvider.php',
-        );
-        self::renamePath(
-            'src/Facades/Skeleton.php',
-            'src/Facades/'.$className.'.php',
-        );
-        self::renamePath(
-            'src/Console/Commands/SkeletonCommand.php',
-            'src/Console/Commands/'.$className.'Command.php',
-        );
-        self::renamePath(
-            'config/skeleton.php',
-            'config/'.$packageSlug.'.php',
-        );
-        self::renamePath(
-            'routes/skeleton.php',
-            'routes/'.$packageSlug.'.php',
-        );
-        self::renamePath(
-            'resources/boost/skills/skeleton',
-            'resources/boost/skills/'.$packageSlug.'-development',
-        );
+        $toRename = [
+            'src/Skeleton.php' => "src/{$className}.php",
+            'src/SkeletonServiceProvider.php' => "src/{$className}ServiceProvider.php",
+            'src/Facades/Skeleton.php' => "src/Facades/{$className}.php",
+            'src/Console/Commands/SkeletonCommand.php' => "src/Console/Commands/{$className}Command.php",
+            'config/skeleton.php' => "config/{$packageSlug}.php",
+            'routes/skeleton.php' => "routes/{$packageSlug}.php",
+            'resources/boost/skills/skeleton' => "resources/boost/skills/{$packageSlug}-development",
+        ];
+
+        foreach ($toRename as $from => $to) {
+            self::renamePath($from, $to);
+        }
 
         $migrationPaths = glob(self::$rootDir.'/database/migrations/*create_skeleton_placeholder_table.php') ?: [];
 
@@ -785,7 +770,7 @@ class LaravelPackageSkeletonConfigurator
                 dirname($migration),
                 str_replace(
                     'create_skeleton_placeholder_table',
-                    'create_'.$tableName.'_table',
+                    "create_{$tableName}_table",
                     basename($migration),
                 ),
             ]);
