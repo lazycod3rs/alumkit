@@ -387,9 +387,11 @@ class LaravelPackageSkeletonConfigurator
         ];
 
         self::replacePackageReadme();
+        self::replacePackageAgentsMarkdown();
         self::replacePlaceholders();
         self::renamePackageFiles();
         self::updateComposerJson($selectedFeatures);
+        self::removePath('.agents/skills/skeleton-development');
         self::copyAgentSkillsToClaude();
 
         foreach (array_diff(self::featureKeys(), $selectedFeatures) as $feature) {
@@ -540,6 +542,7 @@ class LaravelPackageSkeletonConfigurator
             'src/SkeletonServiceProvider.php',
             'README.md',
             'README_PACKAGE.md',
+            'AGENTS_PACKAGE.md',
         ];
 
         foreach ($paths as $path) {
@@ -1308,6 +1311,16 @@ class LaravelPackageSkeletonConfigurator
 
         self::removePath('README.md');
         self::renamePath('README_PACKAGE.md', 'README.md');
+    }
+
+    private static function replacePackageAgentsMarkdown(): void
+    {
+        if (! file_exists(self::$rootDir.'/AGENTS_PACKAGE.md')) {
+            return;
+        }
+
+        self::removePath('AGENTS.md');
+        self::renamePath('AGENTS_PACKAGE.md', 'AGENTS.md');
     }
 
     private static function copyAgentSkillsToClaude(): void
