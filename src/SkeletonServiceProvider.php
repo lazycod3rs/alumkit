@@ -8,7 +8,6 @@ use Closure;
 use Illuminate\Support\ServiceProvider;
 /* @chisel-commands */
 use VendorName\Skeleton\Console\Commands\SkeletonCommand;
-
 /* @end-chisel-commands */
 
 class SkeletonServiceProvider extends ServiceProvider
