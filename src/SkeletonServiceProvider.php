@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace VendorName\Skeleton;
 
+use Closure;
 use Illuminate\Support\ServiceProvider;
 /* @chisel-commands */
 use VendorName\Skeleton\Console\Commands\SkeletonCommand;
@@ -49,13 +50,9 @@ class SkeletonServiceProvider extends ServiceProvider
     /* @chisel-config */
     private function bootConfig(): void
     {
-        if (! $this->app->runningInConsole()) {
-            return;
-        }
-
-        $this->publishes([
+        $this->whenInConsole(fn () => $this->publishes([
             __DIR__.'/../config/skeleton.php' => config_path('skeleton.php'),
-        ], ['skeleton', 'skeleton-config']);
+        ], ['skeleton', 'skeleton-config']));
     }
     /* @end-chisel-config */
 
@@ -71,13 +68,9 @@ class SkeletonServiceProvider extends ServiceProvider
     {
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'skeleton');
 
-        if (! $this->app->runningInConsole()) {
-            return;
-        }
-
-        $this->publishes([
+        $this->whenInConsole(fn () => $this->publishes([
             __DIR__.'/../resources/views' => resource_path('views/vendor/skeleton'),
-        ], ['skeleton', 'skeleton-views']);
+        ], ['skeleton', 'skeleton-views']));
     }
     /* @end-chisel-views */
 
@@ -86,52 +79,45 @@ class SkeletonServiceProvider extends ServiceProvider
     {
         $this->loadTranslationsFrom(__DIR__.'/../lang', 'skeleton');
 
-        if (! $this->app->runningInConsole()) {
-            return;
-        }
-
-        $this->publishes([
+        $this->whenInConsole(fn () => $this->publishes([
             __DIR__.'/../lang' => $this->app->langPath('vendor/skeleton'),
-        ], ['skeleton', 'skeleton-lang']);
+        ], ['skeleton', 'skeleton-lang']));
     }
     /* @end-chisel-translations */
 
     /* @chisel-migrations */
     private function bootMigrations(): void
     {
-        if (! $this->app->runningInConsole()) {
-            return;
-        }
-
-        $this->publishesMigrations([
+        $this->whenInConsole(fn () => $this->publishesMigrations([
             __DIR__.'/../database/migrations' => database_path('migrations'),
-        ], ['skeleton', 'skeleton-migrations']);
+        ], ['skeleton', 'skeleton-migrations']));
     }
     /* @end-chisel-migrations */
 
     /* @chisel-assets */
     private function bootAssets(): void
     {
-        if (! $this->app->runningInConsole()) {
-            return;
-        }
-
-        $this->publishes([
+        $this->whenInConsole(fn () => $this->publishes([
             __DIR__.'/../public' => public_path('vendor/skeleton'),
-        ], ['skeleton', 'skeleton-assets']);
+        ], ['skeleton', 'skeleton-assets']));
     }
     /* @end-chisel-assets */
 
     /* @chisel-commands */
     private function bootCommands(): void
     {
+        $this->whenInConsole(fn () => $this->commands([
+            SkeletonCommand::class,
+        ]));
+    }
+    /* @end-chisel-commands */
+
+    private function whenInConsole(Closure $callback): void
+    {
         if (! $this->app->runningInConsole()) {
             return;
         }
 
-        $this->commands([
-            SkeletonCommand::class,
-        ]);
+        $callback();
     }
-    /* @end-chisel-commands */
 }
