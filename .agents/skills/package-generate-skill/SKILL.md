@@ -18,7 +18,7 @@ Keep the package's bundled Boost skill accurate, concise, and focused on helping
 2. Inspect package documentation: `README.md`, `docs/`, `docs/.vitepress/config.ts`, contributing docs, examples, and changelog entries that describe user-facing behavior.
 3. Identify the public integration surface only. Include install, configure, publish, command, route, facade, helper, middleware, event, and testing guidance only when the package actually exposes it.
 4. Update `resources/boost/skills/*/SKILL.md` with practical adoption steps, references, examples, and anti-patterns for Laravel app developers using the package.
-5. Preserve front matter, package metadata, placeholders in unconfigured packages, and the Boost skill structure: description, primary goal, workflow, references, examples, and anti-patterns.
+5. Preserve front matter, package metadata, and the Boost skill structure: description, primary goal, workflow, references, examples, and anti-patterns.
 6. Validate that the Boost skill does not describe internals as public API and does not document features that are not implemented.
 
 ## Writing Rules
@@ -53,4 +53,4 @@ Keep the package's bundled Boost skill accurate, concise, and focused on helping
 - Regenerating the Boost skill from docs alone without checking implementation.
 - Documenting private classes, test helpers, workbench-only routes, or implementation details as consumer API.
 - Adding speculative examples for features the package does not provide.
-- Removing placeholder-safe metadata before the package has been configured.
+- Removing package metadata that consuming agents need to identify and apply the skill.

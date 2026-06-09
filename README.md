@@ -28,7 +28,9 @@ cd my-package
 
 If you prefer to run the steps manually, run `composer install` first and then `php ./configure.php`.
 
-During configuration, `README_PACKAGE.md` is customized and moved to `README.md`, replacing this skeleton README in the generated package.
+For non-interactive configuration, pass `--no-[feature]` flags to remove features you do not want, such as `php ./configure.php --no-config --no-routes`.
+
+During configuration, `README_PACKAGE.md` and `AGENTS_PACKAGE.md` are customized and moved to `README.md` and `AGENTS.md`, replacing skeleton-facing files in the generated package.
 
 ## Manual GitHub Follow-up
 

@@ -3,6 +3,9 @@
 
 declare(strict_types=1);
 
+use Laravel\AgentDetector\AgentDetector;
+use Laravel\Chisel\Chisel;
+
 use function Laravel\Prompts\confirm;
 use function Laravel\Prompts\error;
 use function Laravel\Prompts\info;
@@ -25,8 +28,10 @@ class LaravelPackageSkeletonConfigurator
 
     private static ?string $rootDir = null;
 
+    private static ?Chisel $chisel = null;
+
     /**
-     * @var array{'metadata': array<string, mixed>, 'selected_features': list<string>, 'selected_tools': list<string>, 'removed_paths': list<string>, 'modified_files': list<string>, 'github': array<string, mixed>, 'manual_steps': list<string>}
+     * @var array{'metadata': array<string, mixed>, 'selected_features': list<string>, 'selected_tools': list<string>, 'removed_paths': list<string>, 'modified_files': list<string>, 'manual_steps': list<string>}
      */
     private static array $summary = [];
 
@@ -46,23 +51,36 @@ class LaravelPackageSkeletonConfigurator
             require_once $autoload;
         }
 
+        if (! self::dependenciesAreInstalled()) {
+            $message = 'Composer dependencies are not installed. Run `composer install` before `php ./configure.php`.';
+
+            if (self::hasNonInteractiveFlags()) {
+                self::writeJson([
+                    'message' => $message,
+                    'success' => false,
+                    'errors' => [$message],
+                ]);
+            } else {
+                fwrite(STDERR, $message.PHP_EOL);
+            }
+
+            return self::FAILURE;
+        }
+
         $defaults = self::defaults();
 
         if (self::isNonInteractive()) {
             return self::runNonInteractive($defaults);
         }
 
-        if (! function_exists("Laravel\Prompts\intro")) {
-            fwrite(
-                STDERR,
-                'Laravel Prompts is not installed. Run `composer install` before `php ./configure.php`.'.
-                    PHP_EOL,
-            );
-
-            return self::FAILURE;
-        }
-
         return self::runInteractive($defaults);
+    }
+
+    private static function dependenciesAreInstalled(): bool
+    {
+        return function_exists('Laravel\Prompts\intro') &&
+            class_exists(AgentDetector::class) &&
+            class_exists(Chisel::class);
     }
 
     private static function runInteractive(array $defaults): int
@@ -136,21 +154,61 @@ class LaravelPackageSkeletonConfigurator
         self::$metadata = $defaults;
 
         $result = self::configure([
-            'features' => self::featureKeys(),
+            'features' => self::nonInteractiveFeatures(),
             'tools' => self::toolKeys(),
         ]);
 
-        if (! $result['success']) {
-            foreach ($result['errors'] as $message) {
-                fwrite(STDERR, (string) $message.PHP_EOL);
-            }
+        self::writeJson(self::nonInteractivePayload($result));
 
-            return self::FAILURE;
-        }
+        return $result['success'] ? self::SUCCESS : self::FAILURE;
+    }
 
-        fwrite(STDOUT, 'Package configured successfully.'.PHP_EOL);
+    /**
+     * @param  array{success: bool, errors: list<string>, github?: array<string, mixed>, summary?: array<string, mixed>}  $result
+     * @return array{message: string, success: bool, errors: list<string>, github: array<string, mixed>, summary: array<string, mixed>}
+     */
+    private static function nonInteractivePayload(array $result): array
+    {
+        $success = $result['success'];
 
-        return self::SUCCESS;
+        return [
+            'message' => $success ? 'Package configured successfully.' : 'Package configuration failed.',
+            'success' => $success,
+            'errors' => $result['errors'],
+            'github' => $result['github'] ?? self::defaultGithubResult(),
+            'summary' => $result['summary'] ?? [],
+        ];
+    }
+
+    /** @return list<string> */
+    private static function nonInteractiveFeatures(): array
+    {
+        $features = self::featureKeys();
+
+        return array_values(
+            array_filter(
+                $features,
+                fn (string $feature): bool => ! in_array(
+                    self::featureDisableFlag($feature),
+                    $_SERVER['argv'] ?? [],
+                    true,
+                ),
+            ),
+        );
+    }
+
+    private static function featureDisableFlag(string $feature): string
+    {
+        return '--no-'.str_replace('_', '-', $feature);
+    }
+
+    /** @param  array<string, mixed>  $payload */
+    private static function writeJson(array $payload): void
+    {
+        fwrite(
+            STDOUT,
+            json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES).PHP_EOL,
+        );
     }
 
     private static function isGithubMode(string $mode): bool
@@ -185,6 +243,16 @@ class LaravelPackageSkeletonConfigurator
         self::$githubConfig = [
             'mode' => 'create',
             'visibility' => $visibility,
+        ];
+    }
+
+    /** @return array{status: string, message: string, created_repositories: list<string>} */
+    private static function defaultGithubResult(): array
+    {
+        return [
+            'status' => 'skipped',
+            'message' => 'GitHub repository creation was skipped.',
+            'created_repositories' => [],
         ];
     }
 
@@ -256,29 +324,25 @@ class LaravelPackageSkeletonConfigurator
                 'label' => 'Author email',
                 'hint' => 'Used in composer.json package author metadata.',
             ],
-            'author_username' => [
-                'label' => 'Author GitHub username',
-                'hint' => 'Used for the README credits link.',
-            ],
             'vendor_slug' => [
-                'label' => 'GitHub / Packagist user',
+                'label' => 'GitHub / Packagist username',
                 'hint' => 'Use the GitHub user or organization that will own the repository and Packagist package.',
+            ],
+            'package_name' => [
+                'label' => 'Package name (human readable)',
+                'hint' => 'Used as the human-readable package name in README and docs.',
             ],
             'vendor_namespace' => [
                 'label' => 'Vendor namespace',
                 'hint' => 'Used as the top-level PHP namespace, for example VendorName\\PackageName.',
             ],
-            'package_name' => [
-                'label' => 'Package name',
-                'hint' => 'Used as the human-readable package name in README and docs.',
-            ],
-            'package_slug' => [
-                'label' => 'Package slug',
-                'hint' => 'Used in composer package names, publish tags, config files, routes, and URLs.',
-            ],
             'class_name' => [
                 'label' => 'Main class name',
                 'hint' => 'Used for the main class, service provider, facade, and command class names.',
+            ],
+            'package_slug' => [
+                'label' => 'Package identifier',
+                'hint' => 'Used in composer package names, publish tags, config files, routes, and URLs.',
             ],
             'package_description' => [
                 'label' => 'Package description',
@@ -304,11 +368,15 @@ class LaravelPackageSkeletonConfigurator
             return [
                 'success' => false,
                 'errors' => $errors,
+                'github' => self::defaultGithubResult(),
                 'summary' => [],
             ];
         }
 
         self::$metadata['vendor_slug'] = self::slug(self::$metadata['vendor_slug']);
+        self::$metadata['author_username'] ??= self::$metadata['vendor_slug'];
+
+        $github = self::defaultGithubResult();
 
         self::$summary = [
             'metadata' => self::$metadata,
@@ -316,18 +384,15 @@ class LaravelPackageSkeletonConfigurator
             'selected_tools' => $selectedTools,
             'removed_paths' => [],
             'modified_files' => [],
-            'github' => [
-                'status' => 'skipped',
-                'message' => 'GitHub repository creation was skipped.',
-                'created_repositories' => [],
-            ],
             'manual_steps' => self::manualSteps($selectedTools),
         ];
 
         self::replacePackageReadme();
+        self::replacePackageAgentsMarkdown();
         self::replacePlaceholders();
         self::renamePackageFiles();
         self::updateComposerJson($selectedFeatures);
+        self::removePath('.agents/skills/skeleton-development');
         self::copyAgentSkillsToClaude();
 
         foreach (array_diff(self::featureKeys(), $selectedFeatures) as $feature) {
@@ -338,6 +403,7 @@ class LaravelPackageSkeletonConfigurator
             self::removeTool($tool);
         }
 
+        self::removeChiselMarkers($selectedFeatures);
         self::copyAgentsMarkdownToClaude();
         self::cleanupEmptyDirectories();
 
@@ -349,21 +415,19 @@ class LaravelPackageSkeletonConfigurator
                 'errors' => [
                     'Code formatting failed: '.$formatResult['output'],
                 ],
-                'github' => self::$summary['github'],
+                'github' => $github,
                 'summary' => self::$summary,
             ];
         }
 
         if (self::isGithubMode('create')) {
-            $githubResult = self::createGitHubRepository(self::$githubConfig);
+            $github = self::createGitHubRepository(self::$githubConfig);
 
-            self::$summary['github'] = $githubResult;
-
-            if (! $githubResult['success']) {
+            if (! $github['success']) {
                 return [
                     'success' => false,
-                    'errors' => [$githubResult['message']],
-                    'github' => $githubResult,
+                    'errors' => [$github['message']],
+                    'github' => $github,
                     'summary' => self::$summary,
                 ];
             }
@@ -382,7 +446,7 @@ class LaravelPackageSkeletonConfigurator
                     'Composer autoload generation failed: '.
                         $dumpAutoloadResult['output'],
                 ],
-                'github' => self::$summary['github'],
+                'github' => $github,
                 'summary' => self::$summary,
             ];
         }
@@ -393,7 +457,7 @@ class LaravelPackageSkeletonConfigurator
         return [
             'success' => true,
             'errors' => [],
-            'github' => self::$summary['github'],
+            'github' => $github,
             'summary' => self::$summary,
         ];
     }
@@ -404,7 +468,6 @@ class LaravelPackageSkeletonConfigurator
     private static function metadataDefault(string $key, array $defaults): string
     {
         return match (true) {
-            $key === 'vendor_slug' && self::hasMetadata('author_username') => self::slug(self::$metadata['author_username']),
             $key === 'package_slug' && self::hasMetadata('package_name') => self::slug(self::$metadata['package_name']),
             $key === 'class_name' && self::hasMetadata('package_name') => self::studly(self::slug(self::$metadata['package_name'])),
             default => $defaults[$key],
@@ -478,6 +541,7 @@ class LaravelPackageSkeletonConfigurator
             'src/SkeletonServiceProvider.php',
             'README.md',
             'README_PACKAGE.md',
+            'AGENTS_PACKAGE.md',
         ];
 
         foreach ($paths as $path) {
@@ -573,12 +637,7 @@ class LaravelPackageSkeletonConfigurator
                 $contents,
             ) ?? $contents;
 
-            if ($updated === $contents) {
-                continue;
-            }
-
-            file_put_contents($file, $updated);
-            self::trackModified($file);
+            self::replaceFileContents($file, $contents, $updated);
         }
     }
 
@@ -690,34 +749,19 @@ class LaravelPackageSkeletonConfigurator
         $packageSlug = self::$metadata['package_slug'];
         $tableName = self::snake($packageSlug).'_placeholder';
 
-        self::renamePath(
-            'src/Skeleton.php',
-            'src/'.$className.'.php',
-        );
-        self::renamePath(
-            'src/SkeletonServiceProvider.php',
-            'src/'.$className.'ServiceProvider.php',
-        );
-        self::renamePath(
-            'src/Facades/Skeleton.php',
-            'src/Facades/'.$className.'.php',
-        );
-        self::renamePath(
-            'src/Console/Commands/SkeletonCommand.php',
-            'src/Console/Commands/'.$className.'Command.php',
-        );
-        self::renamePath(
-            'config/skeleton.php',
-            'config/'.$packageSlug.'.php',
-        );
-        self::renamePath(
-            'routes/skeleton.php',
-            'routes/'.$packageSlug.'.php',
-        );
-        self::renamePath(
-            'resources/boost/skills/skeleton',
-            'resources/boost/skills/'.$packageSlug.'-development',
-        );
+        $toRename = [
+            'src/Skeleton.php' => "src/{$className}.php",
+            'src/SkeletonServiceProvider.php' => "src/{$className}ServiceProvider.php",
+            'src/Facades/Skeleton.php' => "src/Facades/{$className}.php",
+            'src/Console/Commands/SkeletonCommand.php' => "src/Console/Commands/{$className}Command.php",
+            'config/skeleton.php' => "config/{$packageSlug}.php",
+            'routes/skeleton.php' => "routes/{$packageSlug}.php",
+            'resources/boost/skills/skeleton' => "resources/boost/skills/{$packageSlug}-development",
+        ];
+
+        foreach ($toRename as $from => $to) {
+            self::renamePath($from, $to);
+        }
 
         $migrationPaths = glob(self::$rootDir.'/database/migrations/*create_skeleton_placeholder_table.php') ?: [];
 
@@ -726,7 +770,7 @@ class LaravelPackageSkeletonConfigurator
                 dirname($migration),
                 str_replace(
                     'create_skeleton_placeholder_table',
-                    'create_'.$tableName.'_table',
+                    "create_{$tableName}_table",
                     basename($migration),
                 ),
             ]);
@@ -799,7 +843,11 @@ class LaravelPackageSkeletonConfigurator
             ];
         }
 
-        unset($composer['require-dev']['laravel/prompts']);
+        unset(
+            $composer['require-dev']['laravel/agent-detector'],
+            $composer['require-dev']['laravel/chisel'],
+            $composer['require-dev']['laravel/prompts'],
+        );
 
         if (($composer['extra']['laravel'] ?? []) === []) {
             unset($composer['extra']['laravel']);
@@ -825,159 +873,61 @@ class LaravelPackageSkeletonConfigurator
         $map = [
             'config' => fn () => [
                 self::removePath('config'),
-                self::removeProviderCallAndMethod(
-                    $provider,
-                    'bootConfig',
-                ),
-                self::removeProviderLine(
-                    $provider,
-                    'mergeConfigFrom',
-                ),
-                self::removeMarkdownSection(
-                    $readme,
-                    'Publishing the Configuration File',
-                ),
-                self::removePath(
-                    'docs/getting-started/configuration.md',
-                ),
-                self::removeLinesContaining(
-                    $docsConfig,
-                    ['Configuration'],
-                ),
-                self::removeLinesContaining(
-                    $docsIndex,
-                    ['Configuration'],
-                ),
-                self::removeLinesContaining(
-                    $docsInstallation,
-                    ['-config'],
-                ),
-                self::removeLinesContaining(
-                    self::$rootDir.'/phpstan.neon.dist',
-                    ['        - config'],
-                ),
+                self::removeChiselSection($provider, 'config'),
+                self::removeMarkdownSection($readme, 'Publishing the Configuration File'),
+                self::removePath('docs/getting-started/configuration.md'),
+                self::removeLinesContaining($docsConfig, ['Configuration']),
+                self::removeLinesContaining($docsIndex, ['Configuration']),
+                self::removeLinesContaining($docsInstallation, ['-config']),
+                self::removeLinesContaining(self::$rootDir.'/phpstan.neon.dist', ['        - config']),
             ],
             'routes' => fn () => [
                 self::removePath('routes'),
-                self::removeProviderCallAndMethod(
-                    $provider,
-                    'bootRoutes',
-                ),
-                self::removeLinesContaining(
-                    $readme,
-                    ['route', 'Route'],
-                ),
-                self::removeLinesContaining(
-                    self::$rootDir.'/phpstan.neon.dist',
-                    ['        - routes'],
-                ),
+                self::removeChiselSection($provider, 'routes'),
+                self::removeLinesContaining($readme, ['route', 'Route']),
+                self::removeLinesContaining(self::$rootDir.'/phpstan.neon.dist', ['        - routes']),
             ],
             'views' => fn () => [
                 self::removePath('resources/views'),
-                self::removeProviderCallAndMethod(
-                    $provider,
-                    'bootViews',
-                ),
-                self::removeMarkdownSection(
-                    $readme,
-                    'Publishing the Views',
-                ),
-                self::removeLinesContaining(
-                    $docsInstallation,
-                    ['-views'],
-                ),
+                self::removeChiselSection($provider, 'views'),
+                self::removeMarkdownSection($readme, 'Publishing the Views'),
+                self::removeLinesContaining($docsInstallation, ['-views']),
             ],
             'translations' => fn () => [
                 self::removePath('lang'),
-                self::removeProviderCallAndMethod(
-                    $provider,
-                    'bootTranslations',
-                ),
-                self::removeMarkdownSection(
-                    $readme,
-                    'Publishing the Translations',
-                ),
-                self::removeLinesContaining(
-                    $docsInstallation,
-                    ['-lang'],
-                ),
+                self::removeChiselSection($provider, 'translations'),
+                self::removeMarkdownSection($readme, 'Publishing the Translations'),
+                self::removeLinesContaining($docsInstallation, ['-lang']),
             ],
             'migrations' => fn () => [
                 self::removePath('database/migrations'),
-                self::removeProviderCallAndMethod(
-                    $provider,
-                    'bootMigrations',
-                ),
-                self::removeMarkdownSection(
-                    $readme,
-                    'Publishing and Running the Migrations',
-                ),
-                self::removeLinesContaining(
-                    $docsInstallation,
-                    ['-migrations'],
-                ),
-                self::removeMarkdownSection(
-                    $docsInstallation,
-                    'Running Migrations',
-                ),
-                self::removeLinesContaining(
-                    self::$rootDir.'/phpstan.neon.dist',
-                    ['        - database'],
-                ),
+                self::removeChiselSection($provider, 'migrations'),
+                self::removeMarkdownSection($readme, 'Publishing and Running the Migrations'),
+                self::removeLinesContaining($docsInstallation, ['-migrations']),
+                self::removeMarkdownSection($docsInstallation, 'Running Migrations'),
+                self::removeLinesContaining(self::$rootDir.'/phpstan.neon.dist', ['        - database']),
             ],
             'assets' => fn () => [
                 self::removePath('public'),
-                self::removeProviderCallAndMethod(
-                    $provider,
-                    'bootAssets',
-                ),
-                self::removeMarkdownSection(
-                    $readme,
-                    'Publishing the Public Assets',
-                ),
-                self::removeLinesContaining(
-                    $docsInstallation,
-                    ['-assets'],
-                ),
+                self::removeChiselSection($provider, 'assets'),
+                self::removeMarkdownSection($readme, 'Publishing the Public Assets'),
+                self::removeLinesContaining($docsInstallation, ['-assets']),
             ],
             'commands' => fn () => [
                 self::removePath('src/Console/Commands'),
-                self::removeProviderCallAndMethod(
-                    $provider,
-                    'bootCommands',
-                ),
-                self::removeProviderLine(
-                    $provider,
-                    'Command;',
-                ),
-                self::removeLinesContaining(
-                    $readme,
-                    ['command', 'Command'],
-                ),
+                self::removeChiselSection($provider, 'commands'),
+                self::removeLinesContaining($readme, ['command', 'Command']),
             ],
             'facade' => fn () => [
                 self::removePath('src/Facades'),
-                self::removeLinesContaining(
-                    $readme,
-                    ['facade', 'Facade'],
-                ),
+                self::removeLinesContaining($readme, ['facade', 'Facade']),
             ],
             'boost_skill' => fn () => [
                 self::removePath('resources/boost/skills'),
-                self::removePath(
-                    '.agents/skills/package-generate-skill',
-                ),
-                self::removePath(
-                    '.claude/skills/package-generate-skill',
-                ),
-                self::removeLinesContaining(
-                    $readme,
-                    ['Boost', 'boost'],
-                ),
-                self::removeLinesContaining(
-                    self::$rootDir.'/AGENTS.md',
-                    ['Boost', 'boost'],
-                ),
+                self::removePath('.agents/skills/package-generate-skill'),
+                self::removePath('.claude/skills/package-generate-skill'),
+                self::removeLinesContaining($readme, ['Boost', 'boost']),
+                self::removeLinesContaining(self::$rootDir.'/AGENTS.md', ['Boost', 'boost']),
             ],
         ];
 
@@ -995,98 +945,53 @@ class LaravelPackageSkeletonConfigurator
         $map = [
             'dependabot' => fn () => [
                 self::removePath('.github/dependabot.yml'),
-                self::removeLinesContaining(
-                    $readme,
-                    ['Dependabot'],
-                ),
-                self::removeLinesContaining(
-                    self::$rootDir.'/docs/index.md',
-                    ['Dependabot'],
-                ),
+                self::removeLinesContaining($readme, ['Dependabot']),
+                self::removeLinesContaining(self::$rootDir.'/docs/index.md', ['Dependabot']),
             ],
             'issue_template' => fn () => self::removePath(
                 '.github/ISSUE_TEMPLATE',
             ),
             'changelog' => fn () => [
                 self::removePath('CHANGELOG.md'),
-                self::removePath(
-                    '.github/workflows/update-changelog.yml',
-                ),
+                self::removePath('.github/workflows/update-changelog.yml'),
                 self::removePath('.github/release.yml'),
-                self::removePath(
-                    'docs/getting-started/changelog.md',
-                ),
-                self::removeLinesContaining(
-                    $docsConfig,
-                    ['Changelog'],
-                ),
-                self::removeLinesContaining(
-                    $docsIndex,
-                    ['Changelog'],
-                ),
-                self::removeMarkdownSection(
-                    $readme,
-                    'Changelog',
-                ),
-                self::removeLinesContaining(
-                    $readme,
-                    ['changelog', 'CHANGELOG'],
-                ),
+                self::removePath('docs/getting-started/changelog.md'),
+                self::removeLinesContaining($docsConfig, ['Changelog']),
+                self::removeLinesContaining($docsIndex, ['Changelog']),
+                self::removeMarkdownSection($readme, 'Changelog'),
+                self::removeLinesContaining($readme, ['changelog', 'CHANGELOG']),
             ],
-            'funding' => fn () => self::removePath(
-                '.github/FUNDING.yml',
-            ),
+            'funding' => fn () => self::removePath('.github/FUNDING.yml'),
             'security_policy' => fn () => [
                 self::removePath('.github/SECURITY.md'),
-                self::removeMarkdownSection(
-                    $readme,
-                    'Security Vulnerabilities',
-                ),
+                self::removeMarkdownSection($readme, 'Security Vulnerabilities'),
             ],
             'documentation' => fn () => [
                 self::removePath('docs'),
                 self::removePath('package.json'),
-                self::removePath(
-                    '.agents/skills/package-docs',
-                ),
-                self::removePath(
-                    '.claude/skills/package-docs',
-                ),
+                self::removePath('.agents/skills/package-docs'),
+                self::removePath('.claude/skills/package-docs'),
                 self::removePath('.github/workflows/docs.yml'),
-                self::removeLinesContaining(
-                    $readme,
-                    [
-                        'documentation',
-                        'Documentation',
-                        'VitePress',
-                        'GitHub Pages',
-                    ],
-                ),
-                self::removeLinesContaining(
-                    self::$rootDir.'/AGENTS.md',
-                    ['VitePress', 'docs/'],
-                ),
-                self::removeLinesContaining(
-                    self::$rootDir.'/.agents/skills/package-generate-skill/SKILL.md',
-                    ['docs/'],
-                ),
-                self::removeLinesContaining(
-                    self::$rootDir.'/.claude/skills/package-generate-skill/SKILL.md',
-                    ['docs/'],
-                ),
-                self::removeLinesContaining(
-                    self::$rootDir.'/.gitignore',
-                    [
-                        'docs/.vitepress/dist',
-                        'package-lock.json',
-                        'pnpm-lock.yaml',
-                        'bun.lock',
-                    ],
-                ),
-                self::removeLinesContaining(
-                    self::$rootDir.'/.gitattributes',
-                    ['/docs', '/package.json', 'docs/.vitepress/dist'],
-                ),
+                self::removeLinesContaining($readme, [
+                    'documentation',
+                    'Documentation',
+                    'VitePress',
+                    'GitHub Pages',
+                ]),
+                self::removeLinesContaining(self::$rootDir.'/AGENTS.md', ['VitePress', 'docs/']),
+                self::removeLinesContaining(self::$rootDir.'/.agents/skills/package-generate-skill/SKILL.md', ['docs/']),
+                self::removeLinesContaining(self::$rootDir.'/.claude/skills/package-generate-skill/SKILL.md', ['docs/']),
+                self::removeLinesContaining(self::$rootDir.'/.gitignore', [
+                    'docs/.vitepress/dist',
+                    'package-lock.json',
+                    'pnpm-lock.yaml',
+                    'bun.lock',
+                ]),
+                self::removeLinesContaining(self::$rootDir.'/.gitattributes', [
+                    '/docs',
+                    '/package.json',
+                    'docs/.vitepress/dist',
+                ]),
             ],
         ];
 
@@ -1095,72 +1000,58 @@ class LaravelPackageSkeletonConfigurator
         }
     }
 
-    private static function removeProviderCallAndMethod(string $path, string $method): void
-    {
-        if (! file_exists($path)) {
-            return;
-        }
-
-        $contents = (string) file_get_contents($path);
-        $updated =
-            preg_replace(
-                '/^\s*\$this->'.$method."\(\);\R/m",
-                '',
-                $contents,
-            ) ?? $contents;
-        $updated =
-            preg_replace(
-                '/\n\s*private function '.
-                    $method.
-                    '\(\): void\n\s*\{(?:[^{}]*|\{[^{}]*\})*\}\n/s',
-                "\n",
-                $updated,
-            ) ?? $updated;
-        $updated = preg_replace("/\n{3,}/", "\n\n", $updated) ?? $updated;
-
-        if ($updated !== $contents) {
-            file_put_contents($path, $updated);
-            self::trackModified($path);
-        }
-    }
-
-    private static function removeProviderLine(string $path, string $needle): void
-    {
-        if (! file_exists($path)) {
-            return;
-        }
-
-        $contents = (string) file_get_contents($path);
-        $lines = explode("\n", $contents);
-        $filtered = array_values(
-            array_filter(
-                $lines,
-                fn (string $line): bool => ! str_contains($line, $needle),
-            ),
-        );
-        $updated = implode("\n", $filtered);
-
-        if ($updated !== $contents) {
-            file_put_contents($path, $updated);
-            self::trackModified($path);
-        }
-    }
-
     private static function removeMarkdownSection(string $path, string $heading): void
     {
-        if (! file_exists($path)) {
+        $absolutePath = self::absolutePath($path);
+
+        if (! file_exists($absolutePath)) {
             return;
         }
 
-        $contents = (string) file_get_contents($path);
+        $contents = (string) file_get_contents($absolutePath);
         $pattern =
             '/\n##+ '.preg_quote($heading, '/').'\n.*?(?=\n##+ |\z)/s';
         $updated = preg_replace($pattern, '', $contents) ?? $contents;
 
-        if ($updated !== $contents) {
-            file_put_contents($path, $updated);
-            self::trackModified($path);
+        self::replaceFileContents($absolutePath, $contents, $updated);
+    }
+
+    /**
+     * @param  list<string>  $selectedFeatures
+     */
+    private static function removeChiselMarkers(array $selectedFeatures): void
+    {
+        $provider = sprintf('%s/src/%sServiceProvider.php', self::$rootDir, self::$metadata['class_name']);
+        $providerSections = array_diff(self::featureKeys(), [
+            'facade',
+            'boost_skill',
+        ]);
+
+        foreach ($providerSections as $section) {
+            if (in_array($section, $selectedFeatures, true)) {
+                self::removeChiselSectionMarkers($provider, $section);
+            }
         }
+    }
+
+    private static function removeChiselSection(string $path, string $tag): void
+    {
+        self::rewriteWithChisel(
+            $path,
+            fn (string $relativePath) => self::chisel()
+                ->file($relativePath)
+                ->removeSection($tag),
+        );
+    }
+
+    private static function removeChiselSectionMarkers(string $path, string $tag): void
+    {
+        self::rewriteWithChisel(
+            $path,
+            fn (string $relativePath) => self::chisel()
+                ->file($relativePath)
+                ->removeSectionMarkers($tag),
+        );
     }
 
     /**
@@ -1168,28 +1059,53 @@ class LaravelPackageSkeletonConfigurator
      */
     private static function removeLinesContaining(string $path, array $needles): void
     {
-        if (! file_exists($path)) {
+        $absolutePath = self::absolutePath($path);
+
+        if (! file_exists($absolutePath)) {
             return;
         }
 
-        $contents = (string) file_get_contents($path);
-        $lines = explode("\n", $contents);
-        $filtered = array_values(
-            array_filter($lines, function (string $line) use ($needles): bool {
-                foreach ($needles as $needle) {
-                    if (str_contains($line, $needle)) {
-                        return false;
-                    }
-                }
+        $contents = (string) file_get_contents($absolutePath);
+        $relativePath = self::relativePath($absolutePath);
 
-                return true;
-            }),
-        );
-        $updated = implode("\n", $filtered);
+        foreach ($needles as $needle) {
+            self::chisel()->file($relativePath)->removeLinesContaining($needle);
+        }
+
+        $updated = (string) file_get_contents($absolutePath);
 
         if ($updated !== $contents) {
-            file_put_contents($path, $updated);
-            self::trackModified($path);
+            self::trackModified($absolutePath);
+        }
+    }
+
+    private static function replaceFileContents(string $path, string $contents, string $updated): void
+    {
+        if ($updated === $contents) {
+            return;
+        }
+
+        self::chisel()
+            ->file(self::relativePath(self::absolutePath($path)))
+            ->replace($contents, $updated);
+
+        self::trackModified($path);
+    }
+
+    private static function rewriteWithChisel(string $path, callable $callback): void
+    {
+        $absolutePath = self::absolutePath($path);
+
+        if (! file_exists($absolutePath)) {
+            return;
+        }
+
+        $contents = (string) file_get_contents($absolutePath);
+
+        $callback(self::relativePath($absolutePath));
+
+        if ((string) file_get_contents($absolutePath) !== $contents) {
+            self::trackModified($absolutePath);
         }
     }
 
@@ -1201,27 +1117,42 @@ class LaravelPackageSkeletonConfigurator
             return;
         }
 
-        if (is_dir($path)) {
-            $iterator = new RecursiveIteratorIterator(
-                new RecursiveDirectoryIterator(
-                    $path,
-                    RecursiveDirectoryIterator::SKIP_DOTS,
-                ),
-                RecursiveIteratorIterator::CHILD_FIRST,
-            );
+        if (! is_dir($path)) {
+            self::chisel()->file($relativePath)->delete();
+            self::trackRemoved($relativePath);
 
-            foreach ($iterator as $item) {
-                $item->isDir()
-                    ? rmdir($item->getPathname())
-                    : unlink($item->getPathname());
-            }
-
-            rmdir($path);
-        } else {
-            unlink($path);
+            return;
         }
 
-        self::$summary['removed_paths'][] = $relativePath;
+        $iterator = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator(
+                $path,
+                RecursiveDirectoryIterator::SKIP_DOTS,
+            ),
+            RecursiveIteratorIterator::CHILD_FIRST,
+        );
+
+        foreach ($iterator as $item) {
+            $item->isDir()
+                ? rmdir($item->getPathname())
+                : unlink($item->getPathname());
+        }
+
+        rmdir($path);
+
+        self::trackRemoved($relativePath);
+    }
+
+    private static function chisel(): Chisel
+    {
+        return self::$chisel ??= Chisel::in(self::$rootDir);
+    }
+
+    private static function absolutePath(string $path): string
+    {
+        return str_starts_with($path, self::$rootDir.'/')
+            ? $path
+            : self::$rootDir.'/'.$path;
     }
 
     private static function renamePath(string $from, string $to): void
@@ -1238,8 +1169,8 @@ class LaravelPackageSkeletonConfigurator
         }
 
         rename($source, $destination);
-        self::$summary['removed_paths'][] = $from;
-        self::$summary['modified_files'][] = $to;
+        self::trackRemoved($from);
+        self::trackModified($to);
     }
 
     private static function replacePackageReadme(): void
@@ -1250,6 +1181,16 @@ class LaravelPackageSkeletonConfigurator
 
         self::removePath('README.md');
         self::renamePath('README_PACKAGE.md', 'README.md');
+    }
+
+    private static function replacePackageAgentsMarkdown(): void
+    {
+        if (! file_exists(self::$rootDir.'/AGENTS_PACKAGE.md')) {
+            return;
+        }
+
+        self::removePath('AGENTS.md');
+        self::renamePath('AGENTS_PACKAGE.md', 'AGENTS.md');
     }
 
     private static function copyAgentSkillsToClaude(): void
@@ -1331,7 +1272,7 @@ class LaravelPackageSkeletonConfigurator
                 ) === 0
             ) {
                 rmdir($path);
-                self::$summary['removed_paths'][] = $relativePath;
+                self::trackRemoved($relativePath);
             }
         }
     }
@@ -1533,6 +1474,11 @@ class LaravelPackageSkeletonConfigurator
 
     private static function isNonInteractive(): bool
     {
+        return self::hasNonInteractiveFlags() || AgentDetector::detect()->isAgent;
+    }
+
+    private static function hasNonInteractiveFlags(): bool
+    {
         return getenv('COMPOSER_NO_INTERACTION') === '1' ||
             in_array('--no-interaction', $_SERVER['argv'] ?? []) ||
             in_array('-n', $_SERVER['argv'] ?? []);
@@ -1559,7 +1505,7 @@ class LaravelPackageSkeletonConfigurator
             'package_name' => self::headline($packageSlug),
             'package_slug' => $packageSlug,
             'class_name' => $className,
-            'package_description' => 'A Laravel package.',
+            'package_description' => '',
         ];
     }
 
@@ -1610,16 +1556,16 @@ class LaravelPackageSkeletonConfigurator
 
     private static function relativePath(string $path, ?string $dir = null): string
     {
-        $dir ??= self::$rootDir;
+        $dir = str_replace('\\', '/', $dir ?? self::$rootDir);
+        $path = str_replace('\\', '/', $path);
 
-        return str_replace(
-            '\\',
-            '/',
-            ltrim(
-                substr($path, strlen($dir)),
-                DIRECTORY_SEPARATOR,
-            ),
-        );
+        if (! str_starts_with($path, $dir.'/')) {
+            return ltrim(preg_replace('#^\./#', '', $path) ?? $path, '/');
+        }
+
+        $relativePath = ltrim(substr($path, strlen($dir)), '/');
+
+        return preg_replace('#^\./#', '', $relativePath) ?? $relativePath;
     }
 }
 

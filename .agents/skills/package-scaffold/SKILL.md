@@ -19,8 +19,7 @@ Add package features in the right place and wire them through the service provid
 3. Create the capability files under Laravel-native package paths and use the configured package names, namespaces, publish tags, URLs, and badges consistently.
 4. Wire the capability through the service provider using the patterns in *Provider wiring* below.
 5. Use `package-testing` for coverage, `package-docs` for documentation, `package-compatibility` for matrix-sensitive changes, and `package-release` for release tasks.
-6. If this starter has not been configured yet, preserve `configure.php` mappings when adding or removing selectable capabilities so opt-out cleanup stays accurate.
-7. Add only the files needed for the requested capability and validate with the narrowest relevant command before broader checks.
+6. Add only the files needed for the requested capability and validate with the narrowest relevant command before broader checks.
 
 ## Provider Wiring
 
@@ -58,7 +57,7 @@ Provider wiring anti-patterns:
 
 ## Anti-Patterns
 
-- Adding unused scaffolding because a package might need it later.
-- Mixing old placeholder names with the configured package name.
+- Adding unused files because a package might need them later.
+- Mixing package names, namespaces, config keys, or publish tags.
 - Changing dependencies without approval.
 - Replacing explicit Laravel package code with a helper abstraction when one feature-specific change would do.
