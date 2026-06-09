@@ -874,129 +874,60 @@ class LaravelPackageSkeletonConfigurator
             'config' => fn () => [
                 self::removePath('config'),
                 self::removeChiselSection($provider, 'config'),
-                self::removeMarkdownSection(
-                    $readme,
-                    'Publishing the Configuration File',
-                ),
-                self::removePath(
-                    'docs/getting-started/configuration.md',
-                ),
-                self::removeLinesContaining(
-                    $docsConfig,
-                    ['Configuration'],
-                ),
-                self::removeLinesContaining(
-                    $docsIndex,
-                    ['Configuration'],
-                ),
-                self::removeLinesContaining(
-                    $docsInstallation,
-                    ['-config'],
-                ),
-                self::removeLinesContaining(
-                    self::$rootDir.'/phpstan.neon.dist',
-                    ['        - config'],
-                ),
+                self::removeMarkdownSection($readme, 'Publishing the Configuration File'),
+                self::removePath('docs/getting-started/configuration.md'),
+                self::removeLinesContaining($docsConfig, ['Configuration']),
+                self::removeLinesContaining($docsIndex, ['Configuration']),
+                self::removeLinesContaining($docsInstallation, ['-config']),
+                self::removeLinesContaining(self::$rootDir.'/phpstan.neon.dist', ['        - config']),
             ],
             'routes' => fn () => [
                 self::removePath('routes'),
                 self::removeChiselSection($provider, 'routes'),
-                self::removeLinesContaining(
-                    $readme,
-                    ['route', 'Route'],
-                ),
-                self::removeLinesContaining(
-                    self::$rootDir.'/phpstan.neon.dist',
-                    ['        - routes'],
-                ),
+                self::removeLinesContaining($readme, ['route', 'Route']),
+                self::removeLinesContaining(self::$rootDir.'/phpstan.neon.dist', ['        - routes']),
             ],
             'views' => fn () => [
                 self::removePath('resources/views'),
                 self::removeChiselSection($provider, 'views'),
-                self::removeMarkdownSection(
-                    $readme,
-                    'Publishing the Views',
-                ),
-                self::removeLinesContaining(
-                    $docsInstallation,
-                    ['-views'],
-                ),
+                self::removeMarkdownSection($readme, 'Publishing the Views'),
+                self::removeLinesContaining($docsInstallation, ['-views']),
             ],
             'translations' => fn () => [
                 self::removePath('lang'),
                 self::removeChiselSection($provider, 'translations'),
-                self::removeMarkdownSection(
-                    $readme,
-                    'Publishing the Translations',
-                ),
-                self::removeLinesContaining(
-                    $docsInstallation,
-                    ['-lang'],
-                ),
+                self::removeMarkdownSection($readme, 'Publishing the Translations'),
+                self::removeLinesContaining($docsInstallation, ['-lang']),
             ],
             'migrations' => fn () => [
                 self::removePath('database/migrations'),
                 self::removeChiselSection($provider, 'migrations'),
-                self::removeMarkdownSection(
-                    $readme,
-                    'Publishing and Running the Migrations',
-                ),
-                self::removeLinesContaining(
-                    $docsInstallation,
-                    ['-migrations'],
-                ),
-                self::removeMarkdownSection(
-                    $docsInstallation,
-                    'Running Migrations',
-                ),
-                self::removeLinesContaining(
-                    self::$rootDir.'/phpstan.neon.dist',
-                    ['        - database'],
-                ),
+                self::removeMarkdownSection($readme, 'Publishing and Running the Migrations'),
+                self::removeLinesContaining($docsInstallation, ['-migrations']),
+                self::removeMarkdownSection($docsInstallation, 'Running Migrations'),
+                self::removeLinesContaining(self::$rootDir.'/phpstan.neon.dist', ['        - database']),
             ],
             'assets' => fn () => [
                 self::removePath('public'),
                 self::removeChiselSection($provider, 'assets'),
-                self::removeMarkdownSection(
-                    $readme,
-                    'Publishing the Public Assets',
-                ),
-                self::removeLinesContaining(
-                    $docsInstallation,
-                    ['-assets'],
-                ),
+                self::removeMarkdownSection($readme, 'Publishing the Public Assets'),
+                self::removeLinesContaining($docsInstallation, ['-assets']),
             ],
             'commands' => fn () => [
                 self::removePath('src/Console/Commands'),
                 self::removeChiselSection($provider, 'commands'),
-                self::removeLinesContaining(
-                    $readme,
-                    ['command', 'Command'],
-                ),
+                self::removeLinesContaining($readme, ['command', 'Command']),
             ],
             'facade' => fn () => [
                 self::removePath('src/Facades'),
-                self::removeLinesContaining(
-                    $readme,
-                    ['facade', 'Facade'],
-                ),
+                self::removeLinesContaining($readme, ['facade', 'Facade']),
             ],
             'boost_skill' => fn () => [
                 self::removePath('resources/boost/skills'),
-                self::removePath(
-                    '.agents/skills/package-generate-skill',
-                ),
-                self::removePath(
-                    '.claude/skills/package-generate-skill',
-                ),
-                self::removeLinesContaining(
-                    $readme,
-                    ['Boost', 'boost'],
-                ),
-                self::removeLinesContaining(
-                    self::$rootDir.'/AGENTS.md',
-                    ['Boost', 'boost'],
-                ),
+                self::removePath('.agents/skills/package-generate-skill'),
+                self::removePath('.claude/skills/package-generate-skill'),
+                self::removeLinesContaining($readme, ['Boost', 'boost']),
+                self::removeLinesContaining(self::$rootDir.'/AGENTS.md', ['Boost', 'boost']),
             ],
         ];
 
@@ -1014,98 +945,53 @@ class LaravelPackageSkeletonConfigurator
         $map = [
             'dependabot' => fn () => [
                 self::removePath('.github/dependabot.yml'),
-                self::removeLinesContaining(
-                    $readme,
-                    ['Dependabot'],
-                ),
-                self::removeLinesContaining(
-                    self::$rootDir.'/docs/index.md',
-                    ['Dependabot'],
-                ),
+                self::removeLinesContaining($readme, ['Dependabot']),
+                self::removeLinesContaining(self::$rootDir.'/docs/index.md', ['Dependabot']),
             ],
             'issue_template' => fn () => self::removePath(
                 '.github/ISSUE_TEMPLATE',
             ),
             'changelog' => fn () => [
                 self::removePath('CHANGELOG.md'),
-                self::removePath(
-                    '.github/workflows/update-changelog.yml',
-                ),
+                self::removePath('.github/workflows/update-changelog.yml'),
                 self::removePath('.github/release.yml'),
-                self::removePath(
-                    'docs/getting-started/changelog.md',
-                ),
-                self::removeLinesContaining(
-                    $docsConfig,
-                    ['Changelog'],
-                ),
-                self::removeLinesContaining(
-                    $docsIndex,
-                    ['Changelog'],
-                ),
-                self::removeMarkdownSection(
-                    $readme,
-                    'Changelog',
-                ),
-                self::removeLinesContaining(
-                    $readme,
-                    ['changelog', 'CHANGELOG'],
-                ),
+                self::removePath('docs/getting-started/changelog.md'),
+                self::removeLinesContaining($docsConfig, ['Changelog']),
+                self::removeLinesContaining($docsIndex, ['Changelog']),
+                self::removeMarkdownSection($readme, 'Changelog'),
+                self::removeLinesContaining($readme, ['changelog', 'CHANGELOG']),
             ],
-            'funding' => fn () => self::removePath(
-                '.github/FUNDING.yml',
-            ),
+            'funding' => fn () => self::removePath('.github/FUNDING.yml'),
             'security_policy' => fn () => [
                 self::removePath('.github/SECURITY.md'),
-                self::removeMarkdownSection(
-                    $readme,
-                    'Security Vulnerabilities',
-                ),
+                self::removeMarkdownSection($readme, 'Security Vulnerabilities'),
             ],
             'documentation' => fn () => [
                 self::removePath('docs'),
                 self::removePath('package.json'),
-                self::removePath(
-                    '.agents/skills/package-docs',
-                ),
-                self::removePath(
-                    '.claude/skills/package-docs',
-                ),
+                self::removePath('.agents/skills/package-docs'),
+                self::removePath('.claude/skills/package-docs'),
                 self::removePath('.github/workflows/docs.yml'),
-                self::removeLinesContaining(
-                    $readme,
-                    [
-                        'documentation',
-                        'Documentation',
-                        'VitePress',
-                        'GitHub Pages',
-                    ],
-                ),
-                self::removeLinesContaining(
-                    self::$rootDir.'/AGENTS.md',
-                    ['VitePress', 'docs/'],
-                ),
-                self::removeLinesContaining(
-                    self::$rootDir.'/.agents/skills/package-generate-skill/SKILL.md',
-                    ['docs/'],
-                ),
-                self::removeLinesContaining(
-                    self::$rootDir.'/.claude/skills/package-generate-skill/SKILL.md',
-                    ['docs/'],
-                ),
-                self::removeLinesContaining(
-                    self::$rootDir.'/.gitignore',
-                    [
-                        'docs/.vitepress/dist',
-                        'package-lock.json',
-                        'pnpm-lock.yaml',
-                        'bun.lock',
-                    ],
-                ),
-                self::removeLinesContaining(
-                    self::$rootDir.'/.gitattributes',
-                    ['/docs', '/package.json', 'docs/.vitepress/dist'],
-                ),
+                self::removeLinesContaining($readme, [
+                    'documentation',
+                    'Documentation',
+                    'VitePress',
+                    'GitHub Pages',
+                ]),
+                self::removeLinesContaining(self::$rootDir.'/AGENTS.md', ['VitePress', 'docs/']),
+                self::removeLinesContaining(self::$rootDir.'/.agents/skills/package-generate-skill/SKILL.md', ['docs/']),
+                self::removeLinesContaining(self::$rootDir.'/.claude/skills/package-generate-skill/SKILL.md', ['docs/']),
+                self::removeLinesContaining(self::$rootDir.'/.gitignore', [
+                    'docs/.vitepress/dist',
+                    'package-lock.json',
+                    'pnpm-lock.yaml',
+                    'bun.lock',
+                ]),
+                self::removeLinesContaining(self::$rootDir.'/.gitattributes', [
+                    '/docs',
+                    '/package.json',
+                    'docs/.vitepress/dist',
+                ]),
             ],
         ];
 
