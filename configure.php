@@ -743,7 +743,7 @@ class LaravelPackageSkeletonConfigurator
         $vendorNamespace = self::$metadata['vendor_namespace'];
         $className = self::$metadata['class_name'];
         $packageName = self::$metadata['package_name_human'];
-        [$packageSlug, $vendorSlug] = explode('/', self::$metadata['package_name']);
+        [$vendorSlug, $packageSlug] = explode('/', self::$metadata['package_name']);
 
         return [
             ':author_name' => self::$metadata['author_name'],
