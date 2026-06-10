@@ -273,7 +273,7 @@ class LaravelPackageSkeletonConfigurator
     /** @return array<string, array{label: string, description?: string, remove?: callable}> */
     private static function features(): array
     {
-        $provider = sprintf('%s/src/%sServiceProvider.php', self::$rootDir, self::$metadata['class_name']);
+        $provider = sprintf('%s/src/%sServiceProvider.php', self::$rootDir, self::$metadata['class_name'] ?? '');
         $readme = self::$rootDir.'/README.md';
         $docsConfig = self::$rootDir.'/docs/.vitepress/config.ts';
         $docsIndex = self::$rootDir.'/docs/index.md';
@@ -492,12 +492,12 @@ class LaravelPackageSkeletonConfigurator
             'author_name' => [
                 'label' => 'Author name',
                 'hint' => 'Used in composer.json credits and README attribution.',
-                'default' => fn () => $authorName,
+                'default' => fn () => self::input()->getOption('author-name') ?? $authorName,
             ],
             'author_email' => [
                 'label' => 'Author email',
                 'hint' => 'Used in composer.json package author metadata.',
-                'default' => fn () => $authorEmail,
+                'default' => fn () => self::input()->getOption('author-email') ?? $authorEmail,
                 'validate' => function ($value) {
                     if (filter_var($value, FILTER_VALIDATE_EMAIL) === false) {
                         return 'Must be a valid email address.';
@@ -509,7 +509,7 @@ class LaravelPackageSkeletonConfigurator
             'package_name' => [
                 'label' => 'Package name',
                 'hint' => 'Used in composer.json and as the package name in Packagist.',
-                'default' => "$vendorSlug/$packageSlug",
+                'default' => fn () => self::input()->getOption('package-name') ?? "$vendorSlug/$packageSlug",
                 'validate' => function ($value) {
                     if (! preg_match('/^[a-z0-9]([_.-]?[a-z0-9]+)*\/[a-z0-9](([_.]|-{1,2})?[a-z0-9]+)*$/', $value)) {
                         return 'Package name must be in the format vendor/package.';
@@ -522,6 +522,10 @@ class LaravelPackageSkeletonConfigurator
                 'label' => 'Package name (human readable)',
                 'hint' => 'Used as the human-readable package name in README and docs.',
                 'default' => function () {
+                    if ($value = self::input()->getOption('package-name-human')) {
+                        return $value;
+                    }
+
                     $packageName = explode('/', self::$metadata['package_name'])[1];
 
                     return self::headline(str_replace('-', ' ', $packageName));
@@ -530,12 +534,12 @@ class LaravelPackageSkeletonConfigurator
             'package_description' => [
                 'label' => 'Package description',
                 'hint' => 'Used in composer.json, README, and documentation intro copy.',
-                'default' => fn () => '',
+                'default' => fn () => self::input()->getOption('package-description') ?? '',
             ],
             'vendor_namespace' => [
                 'label' => 'Vendor namespace',
                 'hint' => 'Used as the top-level PHP namespace, for example VendorName\\PackageName.',
-                'default' => fn () => self::studly(self::slug(self::$metadata['package_name_human'])),
+                'default' => fn () => self::input()->getOption('vendor-namespace') ?? self::studly(self::slug(self::$metadata['package_name_human'])),
                 'validate' => function ($value) {
                     if (preg_match('/^[A-Z_a-z][A-Z_a-z0-9]*$/', $value) !== 1) {
                         return 'Vendor namespace must be a valid PHP namespace.';
@@ -547,7 +551,7 @@ class LaravelPackageSkeletonConfigurator
             'class_name' => [
                 'label' => 'Main class name',
                 'hint' => 'Used for the main class, service provider, facade, and command class names.',
-                'default' => fn () => self::studly(self::slug(self::$metadata['package_name_human'])),
+                'default' => fn () => self::input()->getOption('class-name') ?? self::studly(self::slug(self::$metadata['package_name_human'])),
                 'validate' => function ($value) {
                     if (preg_match('/^[A-Z_a-z][A-Z_a-z0-9]*$/', $value) !== 1) {
                         return 'Class name must be a valid PHP class name.';
@@ -1458,9 +1462,21 @@ class LaravelPackageSkeletonConfigurator
             self::featureKeys(),
         );
 
+        $metadataOptions = array_map(
+            fn (string $key, array $field) => new InputOption(
+                str_replace('_', '-', $key),
+                null,
+                InputOption::VALUE_OPTIONAL,
+                $field['label'],
+            ),
+            array_keys(self::metadataFields()),
+            array_values(self::metadataFields()),
+        );
+
         return new InputDefinition([
             new InputOption('no-interaction', 'n', InputOption::VALUE_NONE, 'Run non-interactively with all defaults'),
             ...$featureOptions,
+            ...$metadataOptions,
             new InputOption('help', 'h', InputOption::VALUE_NONE, 'Show usage information'),
         ]);
     }
