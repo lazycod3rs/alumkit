@@ -21,7 +21,7 @@ git clone https://github.com/laravel/package-skeleton.git my-package
 cd my-package
 ```
 
-2. Run `composer setup` to install dependencies and start the interactive package configuration.
+2. Run `composer install` to install dependencies and start the interactive package configuration.
 3. Run `composer test` to confirm the toolchain is green.
 4. Run `composer build` to rebuild the bundled workbench app under `workbench/`.
 5. Run `composer serve` to boot the workbench app at `http://localhost:8000` and test your package end-to-end.

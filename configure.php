@@ -814,7 +814,7 @@ class LaravelPackageSkeletonConfigurator
         $composer['scripts']['clear'] = [
             '@php vendor/bin/testbench package:purge-skeleton --ansi',
         ];
-        unset($composer['scripts']['setup']);
+        unset($composer['scripts']['post-install-cmd']);
         $composer['autoload']['psr-4'] = [$namespace => 'src/'];
         $composer['autoload-dev']['psr-4'] =
             [$namespace.'Tests\\' => 'tests/'] +
