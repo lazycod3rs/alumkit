@@ -127,19 +127,8 @@ class LaravelPackageSkeletonConfigurator
 
         self::setupGithubConfig();
 
-        info('Summary');
-        info(sprintf('Package: %s/%s', self::$metadata['vendor_slug'], self::$metadata['package_slug']));
-        info('Features: '.self::toList($features, fn (string $key): string => self::feature($key)));
-        info('Tools: '.self::toList($tools, fn (string $key): string => self::tool($key)));
-
         if (self::isGithubMode('create')) {
             info(sprintf('GitHub URL: https://github.com/%s/%s', self::$metadata['vendor_slug'], self::$metadata['package_slug']));
-        }
-
-        if (! confirm('Apply these changes?', true)) {
-            warning('Configuration cancelled. No files were changed.');
-
-            return self::FAILURE;
         }
 
         $result = spin(
@@ -286,11 +275,6 @@ class LaravelPackageSkeletonConfigurator
             'facade' => 'Facade',
             'boost_skill' => 'Boost Skill',
         ];
-    }
-
-    private static function toList(array $keys, callable $labelCallback): string
-    {
-        return implode(', ', array_map($labelCallback, $keys));
     }
 
     private static function feature(string $key): string
