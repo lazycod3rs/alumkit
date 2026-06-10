@@ -166,7 +166,7 @@ class LaravelPackageSkeletonConfigurator
             }
         }
 
-        outro('Package configured successfully.');
+        outro('Package configured successfully');
 
         return self::SUCCESS;
     }
