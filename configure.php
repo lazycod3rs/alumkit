@@ -957,7 +957,7 @@ class LaravelPackageSkeletonConfigurator
         );
     }
 
-    private function registerTools()
+    private function registerTools(): void
     {
         $readme = $this->rootDir.'/README.md';
         $docsConfig = $this->rootDir.'/docs/.vitepress/config.ts';
