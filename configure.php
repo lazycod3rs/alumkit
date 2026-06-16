@@ -261,12 +261,12 @@ class Metadata
             'author_name' => [
                 'label' => 'Author name',
                 'hint' => 'Used in composer.json credits and README attribution.',
-                'default' => fn () => $this->input->getOption('author-name') ?? trim((string) shell_exec('git config user.name')) ?: 'Vendor Name',
+                'default' => fn () => $this->input->getOption('author-name') ?? $this->runCommand(['git', 'config', 'user.name'])['output'] ?: 'Vendor Name',
             ],
             'author_email' => [
                 'label' => 'Author email',
                 'hint' => 'Used in composer.json package author metadata.',
-                'default' => fn () => $this->input->getOption('author-email') ?? trim((string) shell_exec('git config user.email')) ?: 'author@example.com',
+                'default' => fn () => $this->input->getOption('author-email') ?? $this->runCommand(['git', 'config', 'user.email'])['output'] ?: 'author@example.com',
                 'validate' => function ($value) {
                     if (filter_var($value, FILTER_VALIDATE_EMAIL) === false) {
                         return 'Must be a valid email address.';
