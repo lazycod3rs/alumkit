@@ -84,12 +84,30 @@ trait InteractsWithGitHub
             return $this->ghAuthenticated;
         }
 
+        if (! $this->commandExists('gh')) {
+            return $this->ghAuthenticated = false;
+        }
+
         $result = $this->runCommand(
             ['gh', 'auth', 'status'],
             getcwd() ?: __DIR__,
         );
 
         return $this->ghAuthenticated = $result['success'];
+    }
+
+    private function ghRepoExists(string $repo): bool
+    {
+        if (! $this->ghIsAuthenticated()) {
+            return false;
+        }
+
+        $result = $this->runCommand(
+            ['gh', 'repo', 'view', $repo, '--json', 'name'],
+            getcwd() ?: __DIR__,
+        );
+
+        return $result['success'];
     }
 
     private function ghUsername(): ?string
@@ -344,6 +362,11 @@ class LaravelPackageSkeletonConfigurator
     private ?InputDefinition $definition = null;
 
     private ?ArgvInput $input = null;
+
+    /**
+     * @var list<string>
+     */
+    private array $manualSteps = [];
 
     /**
      * @var array{'metadata': array<string, mixed>, 'selected_features': list<string>, 'selected_tools': list<string>, 'removed_paths': list<string>, 'modified_files': list<string>, 'manual_steps': list<string>}
@@ -723,6 +746,9 @@ class LaravelPackageSkeletonConfigurator
                     $this->removeLinesContaining($readme, ['Dependabot']),
                     $this->removeLinesContaining($this->rootDir.'/docs/index.md', ['Dependabot']),
                 ],
+                'add' => function () {
+                    $this->manualSteps[] = 'Review Dependabot dependency update pull requests before merging them. This package intentionally does not include a Dependabot automatic merge workflow.';
+                },
                 'description' => 'Automated dependency updates',
             ],
             'issue_template' => [
@@ -733,6 +759,7 @@ class LaravelPackageSkeletonConfigurator
             ],
             'changelog' => [
                 'label' => 'Changelog',
+                'description' => 'Automated changelog generation',
                 'remove' => fn () => [
                     $this->removePath('CHANGELOG.md'),
                     $this->removePath('.github/workflows/update-changelog.yml'),
@@ -743,7 +770,48 @@ class LaravelPackageSkeletonConfigurator
                     $this->removeMarkdownSection($readme, 'Changelog'),
                     $this->removeLinesContaining($readme, ['changelog', 'CHANGELOG']),
                 ],
-                'description' => 'Automated changelog generation',
+                'add' => function () {
+                    $manualStep = 'Create the release-note labels you plan to use, such as `breaking`, `enhancement`, `bug`, `documentation`, `dependencies`, `maintenance`, `skip-changelog`, and `duplicate`.';
+
+                    if (! $this->ghRepoExists($this->metadata->packageName())) {
+                        $this->manualSteps[] = $manualStep;
+
+                        return;
+                    }
+
+                    $labels = [
+                        'breaking',
+                        'enhancement',
+                        'bug',
+                        'documentation',
+                        'dependencies',
+                        'maintenance',
+                        'skip-changelog',
+                        'duplicate',
+                    ];
+                    $failed = false;
+
+                    foreach ($labels as $label) {
+                        $result = $this->runCommand([
+                            'gh',
+                            'label',
+                            'create',
+                            $label,
+                            '--repo',
+                            $this->metadata->packageName(),
+                        ]);
+
+                        if (! $result['success']) {
+                            $failed = true;
+                        }
+                    }
+
+                    if ($failed) {
+                        $this->manualSteps[] = $manualStep;
+                    }
+
+                    $this->manualSteps[] = 'Review branch protection for `main`; changelog automation needs GitHub Actions to be allowed to commit `CHANGELOG.md` after a release is published.';
+                },
             ],
             'funding' => [
                 'label' => 'Funding',
@@ -758,6 +826,7 @@ class LaravelPackageSkeletonConfigurator
             ],
             'documentation' => [
                 'label' => 'Documentation',
+                'description' => 'Docs via VitePress + GitHub Pages',
                 'remove' => fn () => [
                     $this->removePath('docs'),
                     $this->removePath('package.json'),
@@ -785,7 +854,29 @@ class LaravelPackageSkeletonConfigurator
                         'docs/.vitepress/dist',
                     ]),
                 ],
-                'description' => 'Docs via VitePress + GitHub Pages',
+                'add' => function () {
+                    $manualStep = 'Enable GitHub Pages and set the source to GitHub Actions so `.github/workflows/docs.yml` can deploy the VitePress site.';
+
+                    if (! $this->ghRepoExists($this->metadata->packageName())) {
+                        $this->manualSteps[] = $manualStep;
+
+                        return;
+                    }
+
+                    $result = $this->runCommand([
+                        'gh',
+                        'api',
+                        '-X',
+                        'PUT',
+                        "/repos/{$this->metadata->packageName()}/pages",
+                        '-f',
+                        'build_type=workflow',
+                    ]);
+
+                    if (! $result['success']) {
+                        $this->manualSteps[] = $manualStep;
+                    }
+                },
             ],
         ];
     }
@@ -815,7 +906,7 @@ class LaravelPackageSkeletonConfigurator
             'selected_tools' => $selectedTools,
             'removed_paths' => [],
             'modified_files' => [],
-            'manual_steps' => $this->manualSteps($selectedTools),
+            'manual_steps' => $this->manualSteps,
         ];
 
         $this->replacePackageReadme();
@@ -868,6 +959,12 @@ class LaravelPackageSkeletonConfigurator
             }
         }
 
+        foreach ($selectedTools as $toolToAdd) {
+            if (isset($this->tool($toolToAdd)['add'])) {
+                $this->tool($toolToAdd)['add']();
+            }
+        }
+
         if (! $this->isGithubMode('create')) {
             $this->removePath('configure.php');
         }
@@ -895,36 +992,6 @@ class LaravelPackageSkeletonConfigurator
             'github' => $github,
             'summary' => $this->summary,
         ];
-    }
-
-    /**
-     * @param  list<string>  $selectedTools
-     * @return list<string>
-     */
-    private function manualSteps(array $selectedTools): array
-    {
-        $steps = [];
-
-        $toolSteps = [
-            'documentation' => [
-                'Enable GitHub Pages and set the source to GitHub Actions so `.github/workflows/docs.yml` can deploy the VitePress site.',
-            ],
-            'dependabot' => [
-                'Review Dependabot dependency update pull requests before merging them. This package intentionally does not include a Dependabot automatic merge workflow.',
-            ],
-            'changelog' => [
-                'Create the release-note labels you plan to use, such as `breaking`, `enhancement`, `bug`, `documentation`, `dependencies`, `maintenance`, `skip-changelog`, and `duplicate`.',
-                'Review branch protection for `main`; changelog automation needs GitHub Actions to be allowed to commit `CHANGELOG.md` after a release is published.',
-            ],
-        ];
-
-        foreach ($toolSteps as $tool => $toolStep) {
-            if (in_array($tool, $selectedTools)) {
-                $steps = array_merge($steps, $toolStep);
-            }
-        }
-
-        return $steps;
     }
 
     private function replacePlaceholders(): void
@@ -979,7 +1046,7 @@ class LaravelPackageSkeletonConfigurator
             ':vendor_name' => $this->headline($vendorSlug),
             ':vendor_slug' => $vendorSlug,
             ':vendor_namespace' => $vendorNamespace,
-            ':package_name_human' => $packageName,
+            ':package_name' => $packageName,
             ':package_slug' => $packageSlug,
             ':package_description' => $this->metadata->packageDescription(),
             ':class_name' => $className,
