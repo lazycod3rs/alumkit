@@ -685,7 +685,8 @@ class LaravelPackageSkeletonConfigurator
         $this->setupGithubConfig();
 
         if ($this->isGithubMode('create')) {
-            info('GitHub URL: https://github.com/'.$this->metadata->packageName());
+            info('<bg=green;options=bold;fg=black> GitHub URL </>');
+            info('https://github.com/'.$this->metadata->packageName());
         }
 
         $result = spin(
@@ -705,7 +706,7 @@ class LaravelPackageSkeletonConfigurator
         }
 
         if (($result['summary']['manual_steps'] ?? []) !== []) {
-            info('Next steps:');
+            info('<bg=green;options=bold;fg=black> Next Steps </>');
 
             foreach ($result['summary']['manual_steps'] as $manualStep) {
                 $lines = wordwrap($manualStep, width: 60);
