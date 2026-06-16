@@ -593,11 +593,7 @@ class LaravelPackageSkeletonConfigurator
             $message = 'Composer dependencies are not installed. Run `composer install` before `php configure.php`.';
 
             if ($this->hasNonInteractiveFlags()) {
-                $this->writeJson([
-                    'message' => $message,
-                    'success' => false,
-                    'errors' => [$message],
-                ]);
+                $this->writeJson($this->failed($message));
             } else {
                 fwrite(STDERR, $message.PHP_EOL);
             }
@@ -627,6 +623,34 @@ class LaravelPackageSkeletonConfigurator
         }
 
         return $this->runInteractive();
+    }
+
+    /**
+     * @return array{'success': bool, 'errors': list<string>, 'summary': array<string, mixed>} + array<string, mixed>
+     */
+    private function failed(string|array $errors, array $extra = []): array
+    {
+        return $this->response(false, $errors, $extra);
+    }
+
+    /**
+     * @return array{'success': bool, 'errors': list<string>, 'summary': array<string, mixed>} + array<string, mixed>
+     */
+    private function success(array $extra = []): array
+    {
+        return $this->response(true, [], $extra);
+    }
+
+    /**
+     * @return array{'success': bool, 'errors': list<string>, 'summary': array<string, mixed>} + array<string, mixed>
+     */
+    private function response(bool $success, string|array $errors = [], array $extra = []): array
+    {
+        return array_merge([
+            'success' => $success,
+            'errors' => is_array($errors) ? $errors : [$errors],
+            'summary' => $this->summary,
+        ], $extra);
     }
 
     private function dependenciesAreInstalled(): bool
@@ -727,13 +751,9 @@ class LaravelPackageSkeletonConfigurator
     {
         $success = $result['success'];
 
-        return [
-            'message' => $success ? 'Package configured successfully.' : 'Package configuration failed.',
-            'success' => $success,
-            'errors' => $result['errors'],
-            'github' => $result['github'] ?? $this->defaultGithubResult(),
+        return $this->response($success, $result['errors'], [
             'summary' => $result['summary'] ?? [],
-        ];
+        ]);
     }
 
     /** @return list<string> */
@@ -1137,26 +1157,14 @@ class LaravelPackageSkeletonConfigurator
         $formatResult = $this->runCommand([PHP_BINARY, 'vendor/bin/pint', '--quiet']);
 
         if (! $formatResult['success']) {
-            return [
-                'success' => false,
-                'errors' => [
-                    'Code formatting failed: '.$formatResult['output'],
-                ],
-                'github' => $github,
-                'summary' => $this->summary,
-            ];
+            return $this->failed('Code formatting failed: '.$formatResult['output']);
         }
 
         if ($this->isGithubMode('create')) {
             $github = $this->createGitHubRepository($this->githubConfig);
 
             if (! $github['success']) {
-                return [
-                    'success' => false,
-                    'errors' => [$github['message']],
-                    'github' => $github,
-                    'summary' => $this->summary,
-                ];
+                return $this->failed($github['message']);
             }
         }
 
@@ -1180,12 +1188,7 @@ class LaravelPackageSkeletonConfigurator
         sort($this->summary['modified_files']);
         sort($this->summary['removed_paths']);
 
-        return [
-            'success' => true,
-            'errors' => [],
-            'github' => $github,
-            'summary' => $this->summary,
-        ];
+        return $this->success(['summary' => $this->summary]);
     }
 
     private function replacePlaceholders(): void
@@ -1763,15 +1766,13 @@ class LaravelPackageSkeletonConfigurator
             $initResult = $this->runGitHubCommand($initCommand, $runner);
 
             if (! ($initResult['success'] ?? false)) {
-                return [
-                    'success' => false,
-                    'status' => 'failed',
-                    'message' => 'Git repository initialization failed: '.
-                        (string) ($initResult['output'] ?? ''),
-                    'command' => $initCommand,
-                    'commands' => $commands,
-                    'created_repositories' => [],
-                ];
+                return $this->failed(
+                    'Git repository initialization failed: '.(string) ($initResult['output'] ?? ''),
+                    [
+                        'command' => $initCommand,
+                        'commands' => $commands,
+                    ],
+                );
             }
         }
 
@@ -1783,15 +1784,13 @@ class LaravelPackageSkeletonConfigurator
         $result = $this->runGitHubCommand($createCommand, $runner);
 
         if (! ($result['success'] ?? false)) {
-            return [
-                'success' => false,
-                'status' => 'failed',
-                'message' => 'GitHub repository creation failed: '.
-                    (string) ($result['output'] ?? ''),
-                'command' => $createCommand,
-                'commands' => $commands,
-                'created_repositories' => [],
-            ];
+            return $this->failed(
+                'GitHub repository creation failed: '.(string) ($result['output'] ?? ''),
+                [
+                    'command' => $createCommand,
+                    'commands' => $commands,
+                ],
+            );
         }
 
         $this->removePath('configure.php');
@@ -1822,28 +1821,26 @@ class LaravelPackageSkeletonConfigurator
                     $configureContents,
                 );
 
-                return [
-                    'success' => false,
-                    'status' => 'failed',
-                    'message' => 'Initial commit push failed: '.
-                        (string) ($gitResult['output'] ?? ''),
-                    'command' => $gitCommand,
-                    'commands' => $commands,
-                    'created_repositories' => [
-                        'https://github.com/'.$repository,
+                return $this->failed(
+                    'Initial commit push failed: '.(string) ($gitResult['output'] ?? ''),
+                    [
+                        'command' => $gitCommand,
+                        'commands' => $commands,
+                        'created_repositories' => [
+                            'https://github.com/'.$repository,
+                        ],
                     ],
-                ];
+                );
             }
         }
 
-        return [
-            'success' => true,
-            'status' => 'created',
-            'message' => 'GitHub repository was created and the configured package was pushed.',
-            'command' => $createCommand,
-            'commands' => $commands,
-            'created_repositories' => ['https://github.com/'.$repository],
-        ];
+        return $this->success(
+            [
+                'command' => $createCommand,
+                'commands' => $commands,
+                'created_repositories' => ['https://github.com/'.$repository],
+            ],
+        );
     }
 
     private function restoreConfigureScript(string $path, string|false $contents): void
