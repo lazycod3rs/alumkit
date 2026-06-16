@@ -826,9 +826,13 @@ class LaravelPackageSkeletonConfigurator
         ];
     }
 
+    private function providerPath(): string
+    {
+        return sprintf('%s/src/%sServiceProvider.php', $this->rootDir, $this->metadata->className());
+    }
+
     private function registerFeatures(): void
     {
-        $provider = sprintf('%s/src/%sServiceProvider.php', $this->rootDir, $this->metadata->className() ?? '');
         $readme = $this->rootDir.'/README.md';
         $docsConfig = $this->rootDir.'/docs/.vitepress/config.ts';
         $docsIndex = $this->rootDir.'/docs/index.md';
@@ -840,7 +844,7 @@ class LaravelPackageSkeletonConfigurator
                 label: 'Config file',
             )->onRemove(fn () => [
                 $this->removePath('config'),
-                $this->removeChiselSection($provider, 'config'),
+                $this->removeChiselSection($this->providerPath(), 'config'),
                 $this->removeMarkdownSection($readme, 'Publishing the Configuration File'),
                 $this->removePath('docs/getting-started/configuration.md'),
                 $this->removeLinesContaining($docsConfig, ['Configuration']),
@@ -856,7 +860,7 @@ class LaravelPackageSkeletonConfigurator
                 label: 'Routes',
             )->onRemove(fn () => [
                 $this->removePath('routes'),
-                $this->removeChiselSection($provider, 'routes'),
+                $this->removeChiselSection($this->providerPath(), 'routes'),
                 $this->removeLinesContaining($readme, ['route', 'Route']),
                 $this->removeLinesContaining($this->rootDir.'/phpstan.neon.dist', ['        - routes']),
             ]),
@@ -868,7 +872,7 @@ class LaravelPackageSkeletonConfigurator
                 label: 'Views',
             )->onRemove(fn () => [
                 $this->removePath('resources/views'),
-                $this->removeChiselSection($provider, 'views'),
+                $this->removeChiselSection($this->providerPath(), 'views'),
                 $this->removeMarkdownSection($readme, 'Publishing the Views'),
                 $this->removeLinesContaining($docsInstallation, ['-views']),
             ]),
@@ -880,7 +884,7 @@ class LaravelPackageSkeletonConfigurator
                 label: 'Translations',
             )->onRemove(fn () => [
                 $this->removePath('lang'),
-                $this->removeChiselSection($provider, 'translations'),
+                $this->removeChiselSection($this->providerPath(), 'translations'),
                 $this->removeMarkdownSection($readme, 'Publishing the Translations'),
                 $this->removeLinesContaining($docsInstallation, ['-lang']),
             ]),
@@ -892,7 +896,7 @@ class LaravelPackageSkeletonConfigurator
                 label: 'Migrations',
             )->onRemove(fn () => [
                 $this->removePath('database/migrations'),
-                $this->removeChiselSection($provider, 'migrations'),
+                $this->removeChiselSection($this->providerPath(), 'migrations'),
                 $this->removeMarkdownSection($readme, 'Publishing and Running the Migrations'),
                 $this->removeLinesContaining($docsInstallation, ['-migrations']),
                 $this->removeMarkdownSection($docsInstallation, 'Running Migrations'),
@@ -906,7 +910,7 @@ class LaravelPackageSkeletonConfigurator
                 label: 'Assets',
             )->onRemove(fn () => [
                 $this->removePath('public'),
-                $this->removeChiselSection($provider, 'assets'),
+                $this->removeChiselSection($this->providerPath(), 'assets'),
                 $this->removeMarkdownSection($readme, 'Publishing the Public Assets'),
                 $this->removeLinesContaining($docsInstallation, ['-assets']),
             ]),
@@ -918,7 +922,7 @@ class LaravelPackageSkeletonConfigurator
                 label: 'Commands',
             )->onRemove(fn () => [
                 $this->removePath('src/Console/Commands'),
-                $this->removeChiselSection($provider, 'commands'),
+                $this->removeChiselSection($this->providerPath(), 'commands'),
                 $this->removeLinesContaining($readme, ['command', 'Command']),
             ]),
         );
@@ -1471,7 +1475,6 @@ class LaravelPackageSkeletonConfigurator
      */
     private function removeChiselMarkers(array $selectedFeatures): void
     {
-        $provider = sprintf('%s/src/%sServiceProvider.php', $this->rootDir, $this->metadata->className());
         $providerSections = array_diff($this->features->keys(), [
             'facade',
             'boost_skill',
@@ -1479,7 +1482,7 @@ class LaravelPackageSkeletonConfigurator
 
         foreach ($providerSections as $section) {
             if (in_array($section, $selectedFeatures, true)) {
-                $this->removeChiselSectionMarkers($provider, $section);
+                $this->removeChiselSectionMarkers($this->providerPath(), $section);
             }
         }
     }
