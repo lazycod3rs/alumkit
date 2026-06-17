@@ -34,12 +34,12 @@ During configuration, `README_PACKAGE.md` and `AGENTS_PACKAGE.md` are customized
 
 ## Manual GitHub Follow-up
 
-Some GitHub automation and maintenance choices need attention after you create your package repository:
+Some GitHub settings need attention after you create your package repository:
 
-1. Enable GitHub Pages and set the source to GitHub Actions so `.github/workflows/docs.yml` can deploy the VitePress site.
-2. Review Dependabot dependency update pull requests before merging them. This skeleton intentionally does not include a Dependabot automatic merge workflow.
-3. Create the labels used by generated release notes if you want clean categories: `breaking`, `enhancement`, `bug`, `documentation`, `dependencies`, `maintenance`, `skip-changelog`, and `duplicate`.
-4. Review branch protection rules for `main`. The changelog workflow needs GitHub Actions to be allowed to commit `CHANGELOG.md` after a release is published.
+1. Enable GitHub Pages with the source set to GitHub Actions.
+2. Review Dependabot pull requests before merging. This skeleton does not include an automatic merge workflow.
+3. Create the release-note labels: `breaking`, `enhancement`, `bug`, `documentation`, `dependencies`, `maintenance`, `skip-changelog`, and `duplicate`.
+4. Review branch protection for `main` — changelog automation requires GitHub Actions to commit `CHANGELOG.md` after a release.
 
 No additional repository secrets are required; the workflows use GitHub's built-in `GITHUB_TOKEN`.
 
