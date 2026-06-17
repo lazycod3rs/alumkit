@@ -3,7 +3,7 @@
 :package_description
 
 - [Introduction](#introduction)
-- [Why use this package](#why-use-this-package)
+- [Why :package_name](#why-:package-slug)
 - [Features](#features)
 - [Documentation](#documentation)
 
@@ -11,30 +11,20 @@
 
 :package_name provides :package_description
 
-Use these docs as the long-form home for :package_name. Keep the README focused on quick installation and link here for guides, examples, configuration details, and maintenance notes.
+## Why :package_name
 
-## Why use this package
-
-Explain the application problem :package_name solves and when a Laravel developer should reach for it instead of writing the same code in the application.
-
-Keep this section practical. Describe the boundary the package owns, the Laravel concepts it integrates with, and the outcomes users should expect.
+<!-- Describe the problem this package solves and when a developer should reach for it. -->
 
 ## Features
 
-- Installable with Composer as `:vendor_slug/:package_slug`.
-- Auto-discovered service provider for Laravel applications.
-- Publishable resources under the `:package_slug` tag when the package ships configuration, migrations, views, translations, or assets.
-- Local package development workflow using Pest, Larastan, Pint, Testbench, and the Orchestra workbench.
-
-Dependabot is configured to open dependency update pull requests. Review those updates before merging them; this package intentionally avoids automatic dependency merging to reduce supply chain risk.
+- Installable via Composer as `:vendor_slug/:package_slug`.
+- Auto-discovered service provider.
+- Publishable configuration, migrations, views, translations, and assets under the `:package_slug` tag.
+- Dependabot is configured for automated dependency updates.
 
 ## Documentation
-
-Read the docs in this order when adding :package_name to an application for the first time:
 
 - [Installation](getting-started/installation.md)
 - [Configuration](getting-started/configuration.md)
 - [Usage](basics/usage.md)
 - [Changelog](getting-started/changelog.md)
-
-Replace the placeholder sections with package-specific examples once the public API is defined.
