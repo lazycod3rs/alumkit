@@ -291,8 +291,8 @@ class Metadata
                 },
             ],
             'package_name_human' => [
-                'label' => 'Package name (human readable)',
-                'hint' => 'Used as the human-readable package name in README and docs.',
+                'label' => 'Package display name',
+                'hint' => 'Used as the readable package name in README and documentation.',
                 'default' => function () {
                     if ($value = $this->input->getOption('package-name-human')) {
                         return $value;
@@ -947,7 +947,7 @@ class LaravelPackageSkeletonConfigurator
             Feature::from(
                 key: 'boost_skill',
                 label: 'Boost Skill',
-                description: 'Add a package skill for Laravel Boost',
+                description: 'Bundled AI skill for Laravel Boost',
             )->onRemove(fn () => [
                 $this->removePath('resources/boost/skills'),
                 $this->removePath('.agents/skills/package-generate-skill'),
@@ -967,10 +967,10 @@ class LaravelPackageSkeletonConfigurator
         $this->tools->add(
             Tool::from(
                 key: 'dependabot',
-                label: 'Dependabot Pull Requests',
-                description: 'Automated dependency updates',
+                label: 'Dependabot',
+                description: 'Automated dependency update pull requests',
                 manualSteps: [
-                    'Review Dependabot dependency update pull requests before merging them. This package intentionally does not include a Dependabot automatic merge workflow.',
+                    'Review Dependabot pull requests before merging. This package does not include an automatic merge workflow.',
                 ],
             )
                 ->onRemove(fn () => [
@@ -994,10 +994,10 @@ class LaravelPackageSkeletonConfigurator
             Tool::from(
                 key: 'changelog',
                 label: 'Changelog',
-                description: 'Automated changelog generation',
+                description: 'Automated changelog generation via GitHub releases',
                 manualSteps: [
-                    'Create the release-note labels you plan to use, such as `breaking`, `enhancement`, `bug`, `documentation`, `dependencies`, `maintenance`, `skip-changelog`, and `duplicate`.',
-                    'Review branch protection for `main`; changelog automation needs GitHub Actions to be allowed to commit `CHANGELOG.md` after a release is published.',
+                    'Create the release-note labels: `breaking`, `enhancement`, `bug`, `documentation`, `dependencies`, `maintenance`, `skip-changelog`, and `duplicate`.',
+                    'Review branch protection for `main` — changelog automation requires GitHub Actions to commit `CHANGELOG.md` after a release.',
                 ],
             )->onRemove(
                 fn () => [
@@ -1073,7 +1073,7 @@ class LaravelPackageSkeletonConfigurator
                 label: 'Documentation',
                 description: 'Docs via VitePress + GitHub Pages',
                 manualSteps: [
-                    'Enable GitHub Pages and set the source to GitHub Actions so `.github/workflows/docs.yml` can deploy the VitePress site.',
+                    'Enable GitHub Pages with the source set to GitHub Actions.',
                 ],
             )
                 ->onRemove(fn () => [
