@@ -6,7 +6,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thanks for taking the time to report a bug. Please complete the fields below so the maintainer can reproduce the issue quickly.
+        Thanks for taking the time to report a bug. Please complete the fields below so we can reproduce the issue quickly.
 
   - type: input
     id: package-version
