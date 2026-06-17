@@ -14,19 +14,19 @@
 
 ## Installation
 
-You can install the package via composer:
+You can install the package via Composer:
 
 ```bash
 composer require :vendor_slug/:package_slug
 ```
 
-You can publish all of the package's resources at once using the umbrella tag:
+You may publish all of the package's resources at once:
 
 ```bash
 php artisan vendor:publish --tag=":package_slug"
 ```
 
-Alternatively, you can publish each resource individually using the tags below.
+Or, you may publish each resource individually:
 
 ### Publishing the Configuration File
 
@@ -61,9 +61,9 @@ php artisan vendor:publish --tag=":package_slug-assets"
 
 ## Usage
 
-Document how to use :package_name here.
+<!-- Add a basic usage example here. -->
 
-Access the full documentation [here](https://:vendor_slug.github.io/:package_slug).
+Full documentation is available at [https://:vendor_slug.github.io/:package_slug](https://:vendor_slug.github.io/:package_slug).
 
 ## Changelog
 
@@ -71,7 +71,7 @@ Please see [CHANGELOG](CHANGELOG.md) for more information on what has changed re
 
 ## Contributing
 
-Thank you for considering contributing to :package_name! You can read the contribution guide [here](.github/CONTRIBUTING.md).
+Thank you for considering contributing to :package_name! Please review our [contributing guide](.github/CONTRIBUTING.md) to get started.
 
 ## Security Vulnerabilities
 
