@@ -281,7 +281,7 @@ class Metadata
                 'label' => 'Package name',
                 'hint' => 'Used in composer.json and as the package name in Packagist.',
                 'default' => fn () => $this->input->getOption('package-name') ?? implode('/', [
-                    $this->ghUsername() ?: $this->slug($this->authorName()) ?: 'vendor-name',
+                    $this->slug($this->ghUsername() ?: $this->authorName()) ?: 'vendor-name',
                     $this->slug($directoryName === 'package-skeleton' ? 'my-package' : $directoryName),
                 ]),
                 'validate' => function ($value) {
@@ -335,11 +335,30 @@ class Metadata
         ];
     }
 
-    public function useDefaults(): void
+    /** @return list<string> */
+    public function useDefaults(): array
     {
+        $errors = [];
+
         foreach ($this->fields() as $key => $field) {
-            $this->data[$key] = $field['default']();
+            $value = $field['default']();
+            $error = isset($field['validate']) ? $field['validate']($value) : null;
+
+            if ($error !== null) {
+                $errors[] = sprintf('%s: %s', $field['label'], $error);
+
+                // Later defaults derive from the package name; stop before they crash on an invalid one.
+                if ($key === 'package_name') {
+                    break;
+                }
+
+                continue;
+            }
+
+            $this->data[$key] = $value;
         }
+
+        return $errors;
     }
 
     public function toArray(): array
@@ -594,7 +613,7 @@ class LaravelPackageSkeletonConfigurator
         if (! $this->dependenciesAreInstalled()) {
             $message = 'Composer dependencies are not installed. Run `composer install` before `php configure.php`.';
 
-            if ($this->hasNonInteractiveFlags()) {
+            if ($this->hasNonInteractiveSignals()) {
                 $this->writeJson($this->failed($message));
             } else {
                 fwrite(STDERR, $message.PHP_EOL);
@@ -680,7 +699,7 @@ class LaravelPackageSkeletonConfigurator
         $tools = multiselect(
             'Package Tools',
             $this->tools->labels(),
-            $this->tools->keys(),
+            $this->flaggedTools() ?: $this->tools->keys(),
             info: fn (string $key) => $this->tools->get($key)->description ?? '',
         );
 
@@ -738,11 +757,17 @@ class LaravelPackageSkeletonConfigurator
 
     private function runNonInteractive(): int
     {
-        $this->metadata->useDefaults();
+        $errors = $this->metadata->useDefaults();
+
+        if ($errors !== []) {
+            $this->writeJson($this->failed($errors));
+
+            return self::FAILURE;
+        }
 
         $result = $this->configure([
             'features' => $this->flaggedFeatures() ?: $this->features->keys(),
-            'tools' => $this->tools->keys(),
+            'tools' => $this->flaggedTools() ?: $this->tools->keys(),
         ]);
 
         $this->writeJson($this->nonInteractivePayload($result));
@@ -770,6 +795,17 @@ class LaravelPackageSkeletonConfigurator
             array_filter(
                 $this->features->keys(),
                 fn (string $feature): bool => (bool) $this->input()->getOption($this->keyToOption($feature)),
+            ),
+        );
+    }
+
+    /** @return list<string> */
+    private function flaggedTools(): array
+    {
+        return array_values(
+            array_filter(
+                $this->tools->keys(),
+                fn (string $tool): bool => (bool) $this->input()->getOption($this->keyToOption($tool)),
             ),
         );
     }
@@ -1093,11 +1129,13 @@ class LaravelPackageSkeletonConfigurator
         $this->linkClaudeGuidance();
         $this->cleanupEmptyDirectories();
 
-        $formatResult = $this->runCommand([PHP_BINARY, 'vendor/bin/pint', '--quiet']);
+        $formatResult = $this->runCommand([PHP_BINARY, 'vendor/bin/pint']);
 
         if (! $formatResult['success']) {
             return $this->failed('Code formatting failed: '.$formatResult['output']);
         }
+
+        $this->removeConfigureDependencies();
 
         if ($this->isGithubMode('create')) {
             $github = $this->createGitHubRepository($this->githubConfig);
@@ -1117,12 +1155,7 @@ class LaravelPackageSkeletonConfigurator
             $this->removePath('configure.php');
         }
 
-        $composerBinary = getenv('COMPOSER_BINARY');
-        $composerCommand = $composerBinary !== false
-            ? [PHP_BINARY, $composerBinary]
-            : ['composer'];
-
-        $this->runCommand([...$composerCommand, 'dump-autoload', '--quiet']);
+        $this->runCommand([...$this->composerCommand(), 'dump-autoload', '--quiet']);
 
         sort($this->summary['modified_files']);
         sort($this->summary['removed_paths']);
@@ -1370,12 +1403,6 @@ class LaravelPackageSkeletonConfigurator
             ];
         }
 
-        unset(
-            $composer['require-dev']['laravel/agent-detector'],
-            $composer['require-dev']['laravel/chisel'],
-            $composer['require-dev']['laravel/prompts'],
-        );
-
         if (($composer['extra']['laravel'] ?? []) === []) {
             unset($composer['extra']['laravel']);
         }
@@ -1387,6 +1414,36 @@ class LaravelPackageSkeletonConfigurator
         );
 
         $this->trackModified($path);
+    }
+
+    private function removeConfigureDependencies(): void
+    {
+        $result = $this->runCommand([
+            ...$this->composerCommand(),
+            'remove',
+            '--dev',
+            '--no-install',
+            '--no-scripts',
+            '--no-audit',
+            '--quiet',
+            'laravel/agent-detector',
+            'laravel/chisel',
+            'laravel/prompts',
+        ]);
+
+        if ($result['success']) {
+            $this->trackModified('composer.lock');
+        }
+    }
+
+    /** @return list<string> */
+    private function composerCommand(): array
+    {
+        $composerBinary = getenv('COMPOSER_BINARY');
+
+        return $composerBinary !== false
+            ? [PHP_BINARY, $composerBinary]
+            : ['composer'];
     }
 
     private function removeMarkdownSection(string $path, string $heading): void
@@ -1814,14 +1871,21 @@ class LaravelPackageSkeletonConfigurator
     {
         return $this->input()->getOption('no-interaction') ||
             getenv('COMPOSER_NO_INTERACTION') === '1' ||
+            ! $this->stdinIsInteractive() ||
             AgentDetector::detect()->isAgent;
     }
 
-    private function hasNonInteractiveFlags(): bool
+    private function hasNonInteractiveSignals(): bool
     {
         return getenv('COMPOSER_NO_INTERACTION') === '1' ||
+            ! $this->stdinIsInteractive() ||
             in_array('--no-interaction', $_SERVER['argv'] ?? []) ||
             in_array('-n', $_SERVER['argv'] ?? []);
+    }
+
+    private function stdinIsInteractive(): bool
+    {
+        return defined('STDIN') && stream_isatty(STDIN);
     }
 
     private function definition(): InputDefinition
@@ -1841,6 +1905,16 @@ class LaravelPackageSkeletonConfigurator
             $this->features->keys(),
         );
 
+        $toolOptions = array_map(
+            fn (string $key) => new InputOption(
+                $this->keyToOption($key),
+                null,
+                InputOption::VALUE_NONE,
+                sprintf('Include %s', $this->tools->get($key)->label),
+            ),
+            $this->tools->keys(),
+        );
+
         $metadataOptions = array_map(
             fn (string $key, array $field) => new InputOption(
                 str_replace('_', '-', $key),
@@ -1856,6 +1930,7 @@ class LaravelPackageSkeletonConfigurator
             new InputOption('no-interaction', 'n', InputOption::VALUE_NONE, 'Run non-interactively with all defaults'),
             new InputOption('installer-dir', null, InputOption::VALUE_REQUIRED, 'Directory specified by the Laravel installer'),
             ...$featureOptions,
+            ...$toolOptions,
             ...$metadataOptions,
             new InputOption('help', 'h', InputOption::VALUE_NONE, 'Show usage information'),
         ]);

@@ -52,7 +52,13 @@ The configuration script supports non-interactive mode for CI or scripted setups
 php configure.php --no-interaction --config --routes
 ```
 
-Omitting feature flags includes every package feature; passing specific flags includes only those features.
+Non-interactive mode also activates automatically when the `COMPOSER_NO_INTERACTION=1` environment variable is set, when an AI agent is detected, or when standard input is not an interactive terminal.
+
+Omitting feature flags includes every package feature; passing specific flags includes only those features. Tools work the same way: omitting tool flags such as `--dependabot` or `--changelog` includes every tool, while passing specific flags includes only those tools.
+
+Since the default package description is empty, passing `--package-description` is recommended so the generated `composer.json` is ready to publish.
+
+Non-interactive runs print a single line of JSON describing the result, including the resolved metadata, selected features and tools, and any manual follow-up steps. Invalid metadata options fail with a JSON error before any files are changed.
 
 During configuration, `README_PACKAGE.md` and `AGENTS_PACKAGE.md` are customized and moved to `README.md` and `AGENTS.md`, replacing the skeleton files. The script also links `CLAUDE.md` to `AGENTS.md` and `.claude` to `.agents` so both agent formats share the same guidance.
 
