@@ -1,1 +1,1 @@
-<div>Skeleton placeholder view.</div>
+<div>Alumkit placeholder view.</div>

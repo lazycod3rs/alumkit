@@ -2,28 +2,28 @@
 
 declare(strict_types=1);
 
-namespace VendorName\Skeleton\Console\Commands;
+namespace Alumkit\Alumkit\Console\Commands;
 
 use Illuminate\Console\Command;
 
-class SkeletonCommand extends Command
+class AlumkitCommand extends Command
 {
     /**
      * The command signature.
      */
-    protected $signature = 'skeleton:placeholder';
+    protected $signature = 'alumkit:placeholder';
 
     /**
      * The command description.
      */
-    protected $description = 'Placeholder Artisan command shipped by the package skeleton.';
+    protected $description = 'Placeholder Artisan command shipped by the package alumkit.';
 
     /**
      * Execute the console command.
      */
     public function handle(): int
     {
-        $this->line('Skeleton placeholder command executed.');
+        $this->line('Alumkit placeholder command executed.');
 
         return self::SUCCESS;
     }
