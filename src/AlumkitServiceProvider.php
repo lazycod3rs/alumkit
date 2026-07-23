@@ -72,7 +72,13 @@ class AlumkitServiceProvider extends ServiceProvider
         ]);
     }
 
-    protected function configureFortifyConfig(): void {}
+    protected function configureFortifyConfig(): void
+    {
+        config([
+            'fortify.home' => '/dashboard',
+            'fortify.redirects.login' => '/dashboard',
+        ]);
+    }
 
     protected function configureFortifyViews(): void
     {
