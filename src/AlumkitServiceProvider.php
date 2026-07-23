@@ -83,37 +83,30 @@ class AlumkitServiceProvider extends ServiceProvider
     protected function configureFortifyViews(): void
     {
         Fortify::loginView(function () {
-            /** @phpstan-ignore argument.type */
             return view('alumkit::auth.login');
         });
 
         Fortify::registerView(function () {
-            /** @phpstan-ignore argument.type */
             return view('alumkit::auth.register');
         });
 
         Fortify::requestPasswordResetLinkView(function () {
-            /** @phpstan-ignore argument.type */
             return view('alumkit::auth.forgot-password');
         });
 
         Fortify::resetPasswordView(function (Request $request) {
-            /** @phpstan-ignore argument.type */
             return view('alumkit::auth.reset-password', ['request' => $request]);
         });
 
         Fortify::verifyEmailView(function () {
-            /** @phpstan-ignore argument.type */
             return view('alumkit::auth.verify-email');
         });
 
         Fortify::confirmPasswordView(function () {
-            /** @phpstan-ignore argument.type */
             return view('alumkit::auth.confirm-password');
         });
 
         Fortify::twoFactorChallengeView(function () {
-            /** @phpstan-ignore argument.type */
             return view('alumkit::auth.two-factor-challenge');
         });
     }

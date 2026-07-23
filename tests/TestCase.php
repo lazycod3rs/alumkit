@@ -7,7 +7,9 @@ namespace Alumkit\Alumkit\Tests;
 use Alumkit\Alumkit\AlumkitServiceProvider;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Foundation\AliasLoader;
+use Illuminate\Routing\Route;
 use Laravel\Fortify\FortifyServiceProvider;
+use Livewire\LivewireServiceProvider;
 use Orchestra\Testbench\TestCase as Orchestra;
 use TallStackUi\Facades\TallStackUi;
 use TallStackUi\TallStackUiServiceProvider;
@@ -24,11 +26,16 @@ abstract class TestCase extends Orchestra
         });
 
         AliasLoader::getInstance()->alias('TallStackUi', TallStackUi::class);
+
+        $this->app['request']->setRouteResolver(function () {
+            return new Route('GET', '/', static fn () => '');
+        });
     }
 
     protected function getPackageProviders($app): array
     {
         return [
+            LivewireServiceProvider::class,
             TallStackUiServiceProvider::class,
             FortifyServiceProvider::class,
             AlumkitServiceProvider::class,
