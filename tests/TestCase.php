@@ -40,10 +40,21 @@ abstract class TestCase extends Orchestra
         $app['config']->set('app.key', 'base64:'.base64_encode('12345678901234567890123456789012'));
         $app['config']->set('auth.providers.users.model', User::class);
         $app['config']->set('alumkit.auth.user_model', User::class);
+        $app['config']->set('database.default', 'testing');
+        $app['config']->set('database.connections.testing', [
+            'driver' => 'sqlite',
+            'database' => ':memory:',
+            'prefix' => '',
+        ]);
+
+        $app['config']->set('cache.store', 'array');
+        $app['config']->set('cache.default', 'array');
+
+        $app['config']->set('fortify.home', '/dashboard');
     }
 
     protected function defineDatabaseMigrations(): void
     {
-        $this->loadMigrationsFrom(__DIR__.'/../workbench/database/migrations');
+        $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
     }
 }
