@@ -34,15 +34,6 @@
                     @method('PUT')
 
                     <x-input
-                        type="text"
-                        name="name"
-                        :value="old('name', Auth::user()->name)"
-                        :label="__('alumkit::auth.name')"
-                        required
-                        autofocus
-                    />
-
-                    <x-input
                         type="email"
                         name="email"
                         :value="old('email', Auth::user()->email)"

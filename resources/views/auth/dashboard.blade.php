@@ -9,7 +9,7 @@
         </div>
 
         <p class="mt-4 text-gray-600 dark:text-gray-400">
-            {{ __('alumkit::auth.welcome', ['name' => Auth::user()->name]) }}
+            {{ __('alumkit::auth.welcome', ['email' => Auth::user()->email]) }}
         </p>
 
         <div class="mt-6 space-y-2">
