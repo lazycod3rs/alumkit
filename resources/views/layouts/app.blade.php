@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ config('app.name', 'AlumKit') }}</title>
     @tallStackUiStyle
+    <style>[x-cloak] { display: none !important; }</style>
     @stack('styles')
 </head>
 <body class="font-sans antialiased bg-gray-100 dark:bg-gray-900">
@@ -14,6 +15,7 @@
         </div>
     </div>
     @tallStackUiScript
+    @livewireScripts
     @stack('scripts')
 </body>
 </html>
