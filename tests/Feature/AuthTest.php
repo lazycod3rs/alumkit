@@ -29,9 +29,7 @@ it('renders the registration page', function () {
 });
 
 it('logs in with valid credentials', function () {
-    $user = User::factory()->create([
-        'password' => bcrypt('password'),
-    ]);
+    $user = User::factory()->create();
 
     $this->post(route('login'), [
         'email' => $user->email,
@@ -42,9 +40,7 @@ it('logs in with valid credentials', function () {
 });
 
 it('rejects invalid credentials', function () {
-    $user = User::factory()->create([
-        'password' => bcrypt('password'),
-    ]);
+    $user = User::factory()->create();
 
     $this->post(route('login'), [
         'email' => $user->email,
@@ -153,7 +149,7 @@ it('renders the reset password page', function () {
 
 it('resets password with valid token', function () {
     $user = User::factory()->create([
-        'password' => bcrypt('old-password'),
+        'password' => 'old-password',
     ]);
     $token = Password::createToken($user);
 
@@ -214,7 +210,7 @@ it('updates user profile information', function () {
 
 it('updates user password', function () {
     $user = User::factory()->create([
-        'password' => bcrypt('current-password'),
+        'password' => 'current-password',
     ]);
 
     $this->actingAs($user)
@@ -232,7 +228,7 @@ it('updates user password', function () {
 
 it('rejects password update with wrong current password', function () {
     $user = User::factory()->create([
-        'password' => bcrypt('current-password'),
+        'password' => 'current-password',
     ]);
 
     $this->actingAs($user)

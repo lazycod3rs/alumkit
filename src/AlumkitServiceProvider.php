@@ -11,7 +11,6 @@ use Alumkit\Alumkit\Actions\Fortify\UpdateUserProfileInformation;
 use Alumkit\Alumkit\Console\Commands\AlumkitCommand;
 use Illuminate\Http\Request;
 use Illuminate\Support\ServiceProvider;
-use Laravel\Fortify\Features;
 use Laravel\Fortify\Fortify;
 
 class AlumkitServiceProvider extends ServiceProvider
@@ -19,6 +18,7 @@ class AlumkitServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->mergeConfigFrom(__DIR__.'/../config/alumkit.php', 'alumkit');
+        $this->mergeConfigFrom(__DIR__.'/../config/fortify.php', 'fortify');
 
         $this->app->singleton(Alumkit::class);
     }
@@ -72,26 +72,7 @@ class AlumkitServiceProvider extends ServiceProvider
         ]);
     }
 
-    protected function configureFortifyConfig(): void
-    {
-        if ($this->app->configurationIsCached()) {
-            return;
-        }
-
-        config()->set('fortify.views', false);
-        config()->set('fortify.home', '/dashboard');
-        config()->set('fortify.features', [
-            Features::registration(),
-            Features::resetPasswords(),
-            Features::emailVerification(),
-            Features::updateProfileInformation(),
-            Features::updatePasswords(),
-            Features::twoFactorAuthentication([
-                'confirm' => true,
-                'confirmPassword' => true,
-            ]),
-        ]);
-    }
+    protected function configureFortifyConfig(): void {}
 
     protected function configureFortifyViews(): void
     {

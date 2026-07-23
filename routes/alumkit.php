@@ -10,9 +10,7 @@ Route::middleware(['web'])->group(function () {
             /** @phpstan-ignore argument.type */
             return view('alumkit::auth.dashboard');
         })->name('alumkit.dashboard');
-    });
 
-    Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('profile', function () {
             /** @phpstan-ignore argument.type */
             return view('alumkit::profile.show');
