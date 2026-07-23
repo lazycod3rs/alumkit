@@ -1,16 +1,8 @@
 @extends('alumkit::layouts.app')
 
 @section('content')
-    <x-card>
-        <div class="text-center">
-            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
-                {{ __('alumkit::auth.register') }}
-            </h1>
-        </div>
-
-        <x-errors />
-
-        <form method="POST" action="{{ route('register') }}" class="mt-6 space-y-4">
+    <x-alumkit::form-wrapper :title="__('alumkit::auth.register')">
+        <form method="POST" action="{{ route('register') }}" class="space-y-4">
             @csrf
 
             <x-input
@@ -49,13 +41,13 @@
             <x-button type="submit" block :text="__('alumkit::auth.register')" />
         </form>
 
-        <div class="mt-4 text-center">
+        @slot('footer')
             <span class="text-sm text-gray-600 dark:text-gray-400">
                 {{ __('alumkit::auth.already_registered') }}
             </span>
             <a href="{{ route('login') }}" class="text-sm text-indigo-600 hover:text-indigo-500">
                 {{ __('alumkit::auth.sign_in') }}
             </a>
-        </div>
-    </x-card>
+        @endslot
+    </x-alumkit::form-wrapper>
 @endsection
