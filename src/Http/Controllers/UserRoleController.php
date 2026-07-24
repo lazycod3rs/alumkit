@@ -19,7 +19,7 @@ class UserRoleController extends Controller
 
         /** @var View $view */
         $view = view('alumkit::users.index', [
-            'users' => $userModel::with('roles')->all(),
+            'users' => $userModel::with('roles')->get(),
         ]);
 
         return $view;
