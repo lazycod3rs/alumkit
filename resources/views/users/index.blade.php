@@ -68,13 +68,6 @@
                             </td>
                             <td class="py-3 px-4 text-right whitespace-nowrap">
                                 @if (! $isSelf)
-                                    @if ($isPending)
-                                        <form method="POST" action="{{ route('alumkit.users.approve', $u) }}" class="inline">
-                                            @csrf
-                                            <x-button type="submit" size="sm" :text="__('alumkit::dashboard.approve')" />
-                                        </form>
-                                    @endif
-
                                     @if ($isActive)
                                         <form method="POST" action="{{ route('alumkit.users.reject', $u) }}" class="inline">
                                             @csrf
@@ -85,19 +78,10 @@
                                             @csrf
                                             <x-button type="submit" size="sm" color="gray" outline :text="__('alumkit::dashboard.suspend')" />
                                         </form>
-                                    @endif
-
-                                    @if ($isSuspended)
+                                    @else
                                         <form method="POST" action="{{ route('alumkit.users.approve', $u) }}" class="inline">
                                             @csrf
-                                            <x-button type="submit" size="sm" :text="__('alumkit::dashboard.reinstate')" />
-                                        </form>
-                                    @endif
-
-                                    @if ($isRejected)
-                                        <form method="POST" action="{{ route('alumkit.users.approve', $u) }}" class="inline">
-                                            @csrf
-                                            <x-button type="submit" size="sm" :text="__('alumkit::dashboard.approve')" />
+                                            <x-button type="submit" size="sm" :text="$isSuspended ? __('alumkit::dashboard.reinstate') : __('alumkit::dashboard.approve')" />
                                         </form>
                                     @endif
                                 @endif
