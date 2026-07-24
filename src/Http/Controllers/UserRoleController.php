@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Alumkit\Alumkit\Http\Controllers;
 
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use Spatie\Permission\Models\Role;
 
@@ -19,7 +19,7 @@ class UserRoleController extends Controller
 
         /** @var View $view */
         $view = view('alumkit::users.index', [
-            'users' => $userModel::all(),
+            'users' => $userModel::with('roles')->all(),
         ]);
 
         return $view;
@@ -85,8 +85,21 @@ class UserRoleController extends Controller
         $userModel = config('alumkit.auth.user_model', 'App\\Models\\User');
         $targetUser = $userModel::findOrFail($user);
 
+        $lifecycleRoles = [
+            config('alumkit.roles.pending', 'pending'),
+            config('alumkit.roles.rejected', 'rejected'),
+            config('alumkit.roles.suspended', 'suspended'),
+            config('alumkit.roles.approved', 'approved'),
+        ];
+
+        $keepRoles = $targetUser->roles
+            ->pluck('name')
+            ->reject(fn (string $r) => in_array($r, $lifecycleRoles, true))
+            ->values()
+            ->all();
+
         $approvedRole = config('alumkit.roles.approved', 'approved');
-        $targetUser->syncRoles([$approvedRole]);
+        $targetUser->syncRoles(array_merge($keepRoles, [$approvedRole]));
 
         return redirect()->route('alumkit.users.index')
             ->with('status', __('alumkit::dashboard.user_approved'));
@@ -97,9 +110,10 @@ class UserRoleController extends Controller
         $userModel = config('alumkit.auth.user_model', 'App\\Models\\User');
         $targetUser = $userModel::findOrFail($user);
 
-        abort_if(Auth::id() == $targetUser->getKey(), 403);
+        abort_if(Auth::id() === $targetUser->getKey(), 403);
 
-        $targetUser->syncRoles([]);
+        $rejectedRole = config('alumkit.roles.rejected', 'rejected');
+        $targetUser->syncRoles([$rejectedRole]);
 
         return redirect()->route('alumkit.users.index')
             ->with('status', __('alumkit::dashboard.user_rejected'));
@@ -110,9 +124,10 @@ class UserRoleController extends Controller
         $userModel = config('alumkit.auth.user_model', 'App\\Models\\User');
         $targetUser = $userModel::findOrFail($user);
 
-        abort_if(Auth::id() == $targetUser->getKey(), 403);
+        abort_if(Auth::id() === $targetUser->getKey(), 403);
 
-        $targetUser->syncRoles([]);
+        $suspendedRole = config('alumkit.roles.suspended', 'suspended');
+        $targetUser->syncRoles([$suspendedRole]);
 
         return redirect()->route('alumkit.users.index')
             ->with('status', __('alumkit::dashboard.user_suspended'));

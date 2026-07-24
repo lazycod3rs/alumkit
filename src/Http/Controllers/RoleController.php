@@ -96,6 +96,6 @@ class RoleController extends Controller
 
     private function isSystemRole(Role $role): bool
     {
-        return in_array($role->name, config('alumkit.roles'));
+        return in_array($role->name, config('alumkit.roles'), true);
     }
 }

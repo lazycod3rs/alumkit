@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Alumkit\Alumkit\Database\Seeders\AlumkitRolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Workbench\App\Models\User;
 use Workbench\Database\Seeders\DatabaseSeeder;
@@ -26,7 +27,7 @@ it('creates roles with custom names when overridden', function () {
     config(['alumkit.roles' => [
         'admin' => 'administrator',
         'moderator' => 'mod',
-        'member' => 'approved_user',
+        'approved' => 'approved_user',
         'pending' => 'awaiting',
         'rejected' => 'denied',
         'suspended' => 'blocked',
@@ -186,4 +187,102 @@ it('shows suspended status without resubmit button', function () {
 it('redirects unauthenticated users to login', function () {
     $this->get(route('alumkit.pending'))
         ->assertRedirect('/login');
+});
+
+// Task 5: Admin approval actions
+it('approves a pending user', function () {
+    $this->seed(DatabaseSeeder::class);
+
+    $admin = User::factory()->create();
+    $admin->assignRole('approved');
+    Permission::findOrCreate('manage members');
+    $admin->givePermissionTo('manage members');
+
+    $pending = User::factory()->create();
+    $pending->assignRole('pending');
+
+    $this->actingAs($admin)
+        ->post(route('alumkit.users.approve', $pending))
+        ->assertRedirect(route('alumkit.users.index'));
+
+    expect($pending->fresh()->hasRole('approved'))->toBeTrue();
+    expect($pending->fresh()->hasRole('pending'))->toBeFalse();
+});
+
+it('rejects an approved user', function () {
+    $this->seed(DatabaseSeeder::class);
+
+    $admin = User::factory()->create();
+    $admin->assignRole('approved');
+    Permission::findOrCreate('manage members');
+    $admin->givePermissionTo('manage members');
+
+    $target = User::factory()->create();
+    $target->assignRole('approved');
+
+    $this->actingAs($admin)
+        ->post(route('alumkit.users.reject', $target))
+        ->assertRedirect(route('alumkit.users.index'));
+
+    expect($target->fresh()->hasRole('rejected'))->toBeTrue();
+    expect($target->fresh()->hasRole('approved'))->toBeFalse();
+});
+
+it('suspends an approved user', function () {
+    $this->seed(DatabaseSeeder::class);
+
+    $admin = User::factory()->create();
+    $admin->assignRole('approved');
+    Permission::findOrCreate('manage members');
+    $admin->givePermissionTo('manage members');
+
+    $target = User::factory()->create();
+    $target->assignRole('approved');
+
+    $this->actingAs($admin)
+        ->post(route('alumkit.users.suspend', $target))
+        ->assertRedirect(route('alumkit.users.index'));
+
+    expect($target->fresh()->hasRole('suspended'))->toBeTrue();
+    expect($target->fresh()->hasRole('approved'))->toBeFalse();
+});
+
+it('prevents self-rejection', function () {
+    $this->seed(DatabaseSeeder::class);
+
+    $admin = User::factory()->create();
+    $admin->assignRole('approved');
+    Permission::findOrCreate('manage members');
+    $admin->givePermissionTo('manage members');
+
+    $this->actingAs($admin)
+        ->post(route('alumkit.users.reject', $admin))
+        ->assertForbidden();
+});
+
+it('prevents self-suspension', function () {
+    $this->seed(DatabaseSeeder::class);
+
+    $admin = User::factory()->create();
+    $admin->assignRole('approved');
+    Permission::findOrCreate('manage members');
+    $admin->givePermissionTo('manage members');
+
+    $this->actingAs($admin)
+        ->post(route('alumkit.users.suspend', $admin))
+        ->assertForbidden();
+});
+
+it('prevents approved users from resubmitting', function () {
+    $this->seed(DatabaseSeeder::class);
+
+    $user = User::factory()->create();
+    $user->assignRole('approved');
+
+    $this->actingAs($user)
+        ->post(route('alumkit.resubmit'))
+        ->assertRedirect(route('alumkit.dashboard'));
+
+    expect($user->fresh()->hasRole('approved'))->toBeTrue();
+    expect($user->fresh()->hasRole('pending'))->toBeFalse();
 });

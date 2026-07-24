@@ -20,6 +20,13 @@ Route::middleware(['web'])->group(function () {
         })->name('alumkit.pending');
 
         Route::post('pending/resubmit', function (Request $request) {
+            $approvedRole = config('alumkit.roles.approved', 'approved');
+            $adminRole = config('alumkit.roles.admin', 'admin');
+
+            if ($request->user()->hasRole([$approvedRole, $adminRole])) {
+                return redirect()->route('alumkit.dashboard');
+            }
+
             $pendingRole = config('alumkit.roles.pending', 'pending');
             $request->user()->syncRoles([$pendingRole]);
 
@@ -27,6 +34,7 @@ Route::middleware(['web'])->group(function () {
                 ->with('status', __('alumkit::dashboard.resubmitted'));
         })->name('alumkit.resubmit');
 
+        // Resolved once at boot; override config before route registration in tests
         $approvedRole = config('alumkit.roles.approved', 'approved');
         $adminRole = config('alumkit.roles.admin', 'admin');
 

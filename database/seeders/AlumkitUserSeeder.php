@@ -18,8 +18,8 @@ class AlumkitUserSeeder extends Seeder
             return;
         }
 
-        $defaultRoles = config('permission.alumkit.default_roles', ['admin', 'moderator', 'approved']);
-        $adminRole = $defaultRoles[0] ?? 'admin';
+        $roles = config('alumkit.roles', []);
+        $adminRole = $roles['admin'] ?? 'admin';
 
         try {
             $role = Role::findByName($adminRole);

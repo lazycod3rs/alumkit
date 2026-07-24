@@ -4,7 +4,6 @@
     $pendingRole = config('alumkit.roles.pending', 'pending');
     $rejectedRole = config('alumkit.roles.rejected', 'rejected');
     $suspendedRole = config('alumkit.roles.suspended', 'suspended');
-    $identityRoles = [$adminRole, $approvedRole, $pendingRole, $rejectedRole, $suspendedRole];
 @endphp
 
 @extends('alumkit::layouts.dashboard')
@@ -44,23 +43,23 @@
                             <td class="py-3 px-4">
                                 @if ($isApproved)
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                                        Approved
+                                        {{ __('alumkit::dashboard.status_approved') }}
                                     </span>
                                 @elseif ($isPending)
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
-                                        Pending
+                                        {{ __('alumkit::dashboard.status_pending') }}
                                     </span>
                                 @elseif ($isRejected)
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
-                                        Rejected
+                                        {{ __('alumkit::dashboard.status_rejected') }}
                                     </span>
                                 @elseif ($isSuspended)
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
-                                        Suspended
+                                        {{ __('alumkit::dashboard.status_suspended') }}
                                     </span>
                                 @else
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400">
-                                        No access
+                                        {{ __('alumkit::dashboard.status_no_access') }}
                                     </span>
                                 @endif
                             </td>
