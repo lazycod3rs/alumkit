@@ -16,7 +16,16 @@ class RoleController extends Controller
 {
     public function index(): View
     {
-        $roles = Role::with('permissions')->get();
+        $lifecycleRoles = [
+            config('alumkit.roles.pending', 'pending'),
+            config('alumkit.roles.approved', 'approved'),
+            config('alumkit.roles.rejected', 'rejected'),
+            config('alumkit.roles.suspended', 'suspended'),
+        ];
+
+        $roles = Role::with('permissions')
+            ->whereNotIn('name', $lifecycleRoles)
+            ->get();
 
         /** @var View $view */
         $view = view('alumkit::roles.index', compact('roles'));
