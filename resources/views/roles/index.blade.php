@@ -28,7 +28,13 @@
                     </tr>
                 </thead>
                 <tbody>
+                    @php
+                        $systemRoles = config('alumkit.roles');
+                    @endphp
                     @foreach ($roles as $role)
+                        @php
+                            $isSystem = in_array($role->name, $systemRoles);
+                        @endphp
                         <tr class="border-b dark:border-gray-700">
                             <td class="py-3 px-4 font-medium">{{ $role->name }}</td>
                             <td class="py-3 px-4 text-gray-600 dark:text-gray-400">
@@ -36,17 +42,21 @@
                             </td>
                             <td class="py-3 px-4 text-right">
                                 @can('manage roles')
-                                    <a href="{{ route('alumkit.roles.edit', $role) }}" class="text-blue-600 hover:text-blue-900 mr-3">
-                                        {{ __('alumkit::dashboard.edit') }}
-                                    </a>
+                                    @if (! $isSystem)
+                                        <a href="{{ route('alumkit.roles.edit', $role) }}" class="text-blue-600 hover:text-blue-900 mr-3">
+                                            {{ __('alumkit::dashboard.edit') }}
+                                        </a>
 
-                                    <form method="POST" action="{{ route('alumkit.roles.destroy', $role) }}" class="inline" onsubmit="return confirm('{{ __('alumkit::dashboard.confirm_delete') }}')">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="text-red-600 hover:text-red-900">
-                                            {{ __('alumkit::dashboard.delete') }}
-                                        </button>
-                                    </form>
+                                        <form method="POST" action="{{ route('alumkit.roles.destroy', $role) }}" class="inline" onsubmit="return confirm('{{ __('alumkit::dashboard.confirm_delete') }}')">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="text-red-600 hover:text-red-900">
+                                                {{ __('alumkit::dashboard.delete') }}
+                                            </button>
+                                        </form>
+                                    @else
+                                        <span class="text-gray-400 dark:text-gray-500 text-sm">System</span>
+                                    @endif
                                 @endcan
                             </td>
                         </tr>

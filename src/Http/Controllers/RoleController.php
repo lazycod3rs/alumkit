@@ -48,6 +48,8 @@ class RoleController extends Controller
 
     public function edit(Role $role): View
     {
+        abort_if($this->isSystemRole($role), 403);
+
         $permissions = Permission::all();
 
         /** @var View $view */
@@ -58,6 +60,8 @@ class RoleController extends Controller
 
     public function update(UpdateRoleRequest $request, Role $role): RedirectResponse
     {
+        abort_if($this->isSystemRole($role), 403);
+
         $role->update(['name' => $request->validated('name')]);
 
         $role->syncPermissions($request->validated('permissions', []));
@@ -68,6 +72,8 @@ class RoleController extends Controller
 
     public function destroy(Role $role): RedirectResponse
     {
+        abort_if($this->isSystemRole($role), 403);
+
         if ($role->users()->exists()) {
             return redirect()->route('alumkit.roles.index')
                 ->with('error', __('alumkit::dashboard.role_has_users'));
@@ -77,5 +83,10 @@ class RoleController extends Controller
 
         return redirect()->route('alumkit.roles.index')
             ->with('status', __('alumkit::dashboard.role_deleted'));
+    }
+
+    private function isSystemRole(Role $role): bool
+    {
+        return in_array($role->name, config('alumkit.roles'));
     }
 }
