@@ -19,6 +19,7 @@ class WorkbenchServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        config(['cache.default' => 'file']);
+        config(['alumkit.auth.user_model' => \Workbench\App\Models\User::class]);
     }
 }
