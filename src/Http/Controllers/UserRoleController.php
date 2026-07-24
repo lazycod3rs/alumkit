@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Alumkit\Alumkit\Http\Controllers;
 
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\View\View;
@@ -96,6 +97,8 @@ class UserRoleController extends Controller
         $userModel = config('alumkit.auth.user_model', 'App\\Models\\User');
         $targetUser = $userModel::findOrFail($user);
 
+        abort_if(Auth::id() == $targetUser->getKey(), 403);
+
         $targetUser->syncRoles([]);
 
         return redirect()->route('alumkit.users.index')
@@ -106,6 +109,8 @@ class UserRoleController extends Controller
     {
         $userModel = config('alumkit.auth.user_model', 'App\\Models\\User');
         $targetUser = $userModel::findOrFail($user);
+
+        abort_if(Auth::id() == $targetUser->getKey(), 403);
 
         $targetUser->syncRoles([]);
 

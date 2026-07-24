@@ -37,6 +37,7 @@
                             $isRejected = $u->hasRole($rejectedRole);
                             $isSuspended = $u->hasRole($suspendedRole);
                             $displayRoles = $u->roles->pluck('name')->reject(fn ($r) => in_array($r, [$approvedRole, $pendingRole, $rejectedRole, $suspendedRole]))->implode(', ');
+                            $isSelf = Auth::id() === $u->id || Auth::id() == $u->getKey();
                         @endphp
                         <tr class="border-b dark:border-gray-700">
                             <td class="py-3 px-4 font-medium">{{ $u->email }}</td>
@@ -67,35 +68,39 @@
                                 {{ $displayRoles ?: '—' }}
                             </td>
                             <td class="py-3 px-4 text-right whitespace-nowrap">
-                                @if (! $isApproved)
-                                    <form method="POST" action="{{ route('alumkit.users.approve', $u) }}" class="inline">
-                                        @csrf
-                                        <x-button type="submit" size="sm" :text="__('alumkit::dashboard.approve')" />
-                                    </form>
+                                @if (! $isSelf)
+                                    @if (! $isApproved)
+                                        <form method="POST" action="{{ route('alumkit.users.approve', $u) }}" class="inline">
+                                            @csrf
+                                            <x-button type="submit" size="sm" :text="__('alumkit::dashboard.approve')" />
+                                        </form>
+                                    @endif
+
+                                    @if ($isApproved)
+                                        <form method="POST" action="{{ route('alumkit.users.reject', $u) }}" class="inline">
+                                            @csrf
+                                            <x-button type="submit" size="sm" color="red" :text="__('alumkit::dashboard.reject')" />
+                                        </form>
+
+                                        <form method="POST" action="{{ route('alumkit.users.suspend', $u) }}" class="inline ml-1">
+                                            @csrf
+                                            <x-button type="submit" size="sm" color="gray" outline :text="__('alumkit::dashboard.suspend')" />
+                                        </form>
+                                    @endif
+
+                                    @if ($isSuspended || $isRejected)
+                                        <form method="POST" action="{{ route('alumkit.users.approve', $u) }}" class="inline">
+                                            @csrf
+                                            <x-button type="submit" size="sm" :text="__('alumkit::dashboard.approve')" />
+                                        </form>
+                                    @endif
                                 @endif
 
-                                @if ($isApproved)
-                                    <form method="POST" action="{{ route('alumkit.users.reject', $u) }}" class="inline">
-                                        @csrf
-                                        <x-button type="submit" size="sm" color="red" :text="__('alumkit::dashboard.reject')" />
-                                    </form>
-
-                                    <form method="POST" action="{{ route('alumkit.users.suspend', $u) }}" class="inline ml-1">
-                                        @csrf
-                                        <x-button type="submit" size="sm" color="gray" outline :text="__('alumkit::dashboard.suspend')" />
-                                    </form>
+                                @if (! $isSelf)
+                                    <a href="{{ route('alumkit.users.roles.edit', $u) }}" class="text-blue-600 hover:text-blue-900 ml-2 text-sm">
+                                        {{ __('alumkit::dashboard.assign_roles') }}
+                                    </a>
                                 @endif
-
-                                @if ($isSuspended || $isRejected)
-                                    <form method="POST" action="{{ route('alumkit.users.approve', $u) }}" class="inline">
-                                        @csrf
-                                        <x-button type="submit" size="sm" :text="__('alumkit::dashboard.approve')" />
-                                    </form>
-                                @endif
-
-                                <a href="{{ route('alumkit.users.roles.edit', $u) }}" class="text-blue-600 hover:text-blue-900 ml-2 text-sm">
-                                    {{ __('alumkit::dashboard.assign_roles') }}
-                                </a>
                             </td>
                         </tr>
                     @endforeach
