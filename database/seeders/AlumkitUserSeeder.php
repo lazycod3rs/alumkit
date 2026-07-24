@@ -18,8 +18,8 @@ class AlumkitUserSeeder extends Seeder
         }
 
         $user = $userModel::create([
-            'email' => 'admin@example.com',
- 'password' => bcrypt('password'),
+            'email' => config('alumkit.seeder.admin_email', 'admin@example.com'),
+            'password' => bcrypt(config('alumkit.seeder.admin_password', 'password')),
             'email_verified_at' => now(),
         ]);
 
