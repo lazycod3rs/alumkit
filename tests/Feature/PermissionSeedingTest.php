@@ -28,7 +28,7 @@ it('creates the expected roles', function () {
 
     expect($roles)->toContain('admin');
     expect($roles)->toContain('moderator');
-    expect($roles)->toContain('approved');
+    expect($roles)->toContain('active');
     expect($roles)->toContain('pending');
     expect($roles)->toContain('rejected');
     expect($roles)->toContain('suspended');
@@ -61,10 +61,10 @@ it('assigns correct permissions to the moderator role', function () {
     ]);
 });
 
-it('assigns no permissions to the approved role', function () {
+it('assigns no permissions to the active role', function () {
     $this->seed(AlumkitRolesAndPermissionsSeeder::class);
 
-    $approvedRole = Role::findByName('approved');
+    $activeRole = Role::findByName('active');
 
-    expect($approvedRole->permissions->count())->toBe(0);
+    expect($activeRole->permissions->count())->toBe(0);
 });

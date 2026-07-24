@@ -20,10 +20,10 @@ Route::middleware(['web'])->group(function () {
         })->name('alumkit.pending');
 
         Route::post('pending/resubmit', function (Request $request) {
-            $approvedRole = config('alumkit.roles.approved', 'approved');
+            $activeRole = config('alumkit.roles.active', 'active');
             $adminRole = config('alumkit.roles.admin', 'admin');
 
-            if ($request->user()->hasRole([$approvedRole, $adminRole])) {
+            if ($request->user()->hasRole([$activeRole, $adminRole])) {
                 return redirect()->route('alumkit.dashboard');
             }
 
@@ -35,10 +35,10 @@ Route::middleware(['web'])->group(function () {
         })->name('alumkit.resubmit');
 
         // Resolved once at boot; override config before route registration in tests
-        $approvedRole = config('alumkit.roles.approved', 'approved');
+        $activeRole = config('alumkit.roles.active', 'active');
         $adminRole = config('alumkit.roles.admin', 'admin');
 
-        Route::middleware("role:{$approvedRole}|{$adminRole}")->group(function () {
+        Route::middleware("role:{$activeRole}|{$adminRole}")->group(function () {
             Route::get('dashboard', function () {
                 /** @phpstan-ignore argument.type */
                 return view('alumkit::dashboard');

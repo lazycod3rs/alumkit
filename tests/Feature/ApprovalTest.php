@@ -17,7 +17,7 @@ it('creates all 6 core roles from config', function () {
 
     expect(Role::where('name', 'admin')->exists())->toBeTrue();
     expect(Role::where('name', 'moderator')->exists())->toBeTrue();
-    expect(Role::where('name', 'approved')->exists())->toBeTrue();
+    expect(Role::where('name', 'active')->exists())->toBeTrue();
     expect(Role::where('name', 'pending')->exists())->toBeTrue();
     expect(Role::where('name', 'rejected')->exists())->toBeTrue();
     expect(Role::where('name', 'suspended')->exists())->toBeTrue();
@@ -27,7 +27,7 @@ it('creates roles with custom names when overridden', function () {
     config(['alumkit.roles' => [
         'admin' => 'administrator',
         'moderator' => 'mod',
-        'approved' => 'approved_user',
+        'active' => 'approved_user',
         'pending' => 'awaiting',
         'rejected' => 'denied',
         'suspended' => 'blocked',
@@ -98,11 +98,11 @@ it('blocks pending users from accessing dashboard', function () {
         ->assertRedirect(route('alumkit.pending'));
 });
 
-it('allows approved users to access dashboard', function () {
+it('allows active users to access dashboard', function () {
     $this->seed(DatabaseSeeder::class);
 
     $user = User::factory()->create();
-    $user->assignRole('approved');
+    $user->assignRole('active');
 
     $this->actingAs($user)
         ->get(route('alumkit.dashboard'))
@@ -194,7 +194,7 @@ it('approves a pending user', function () {
     $this->seed(DatabaseSeeder::class);
 
     $admin = User::factory()->create();
-    $admin->assignRole('approved');
+    $admin->assignRole('active');
     Permission::findOrCreate('manage members');
     $admin->givePermissionTo('manage members');
 
@@ -205,53 +205,53 @@ it('approves a pending user', function () {
         ->post(route('alumkit.users.approve', $pending))
         ->assertRedirect(route('alumkit.users.index'));
 
-    expect($pending->fresh()->hasRole('approved'))->toBeTrue();
+    expect($pending->fresh()->hasRole('active'))->toBeTrue();
     expect($pending->fresh()->hasRole('pending'))->toBeFalse();
 });
 
-it('rejects an approved user', function () {
+it('rejects an active user', function () {
     $this->seed(DatabaseSeeder::class);
 
     $admin = User::factory()->create();
-    $admin->assignRole('approved');
+    $admin->assignRole('active');
     Permission::findOrCreate('manage members');
     $admin->givePermissionTo('manage members');
 
     $target = User::factory()->create();
-    $target->assignRole('approved');
+    $target->assignRole('active');
 
     $this->actingAs($admin)
         ->post(route('alumkit.users.reject', $target))
         ->assertRedirect(route('alumkit.users.index'));
 
     expect($target->fresh()->hasRole('rejected'))->toBeTrue();
-    expect($target->fresh()->hasRole('approved'))->toBeFalse();
+    expect($target->fresh()->hasRole('active'))->toBeFalse();
 });
 
-it('suspends an approved user', function () {
+it('suspends an active user', function () {
     $this->seed(DatabaseSeeder::class);
 
     $admin = User::factory()->create();
-    $admin->assignRole('approved');
+    $admin->assignRole('active');
     Permission::findOrCreate('manage members');
     $admin->givePermissionTo('manage members');
 
     $target = User::factory()->create();
-    $target->assignRole('approved');
+    $target->assignRole('active');
 
     $this->actingAs($admin)
         ->post(route('alumkit.users.suspend', $target))
         ->assertRedirect(route('alumkit.users.index'));
 
     expect($target->fresh()->hasRole('suspended'))->toBeTrue();
-    expect($target->fresh()->hasRole('approved'))->toBeFalse();
+    expect($target->fresh()->hasRole('active'))->toBeFalse();
 });
 
 it('prevents self-rejection', function () {
     $this->seed(DatabaseSeeder::class);
 
     $admin = User::factory()->create();
-    $admin->assignRole('approved');
+    $admin->assignRole('active');
     Permission::findOrCreate('manage members');
     $admin->givePermissionTo('manage members');
 
@@ -264,7 +264,7 @@ it('prevents self-suspension', function () {
     $this->seed(DatabaseSeeder::class);
 
     $admin = User::factory()->create();
-    $admin->assignRole('approved');
+    $admin->assignRole('active');
     Permission::findOrCreate('manage members');
     $admin->givePermissionTo('manage members');
 
@@ -273,16 +273,16 @@ it('prevents self-suspension', function () {
         ->assertForbidden();
 });
 
-it('prevents approved users from resubmitting', function () {
+it('prevents active users from resubmitting', function () {
     $this->seed(DatabaseSeeder::class);
 
     $user = User::factory()->create();
-    $user->assignRole('approved');
+    $user->assignRole('active');
 
     $this->actingAs($user)
         ->post(route('alumkit.resubmit'))
         ->assertRedirect(route('alumkit.dashboard'));
 
-    expect($user->fresh()->hasRole('approved'))->toBeTrue();
+    expect($user->fresh()->hasRole('active'))->toBeTrue();
     expect($user->fresh()->hasRole('pending'))->toBeFalse();
 });

@@ -34,7 +34,7 @@ class UserRoleController extends Controller
             config('alumkit.roles.pending', 'pending'),
             config('alumkit.roles.rejected', 'rejected'),
             config('alumkit.roles.suspended', 'suspended'),
-            config('alumkit.roles.approved', 'approved'),
+            config('alumkit.roles.active', 'active'),
         ];
 
         $roles = Role::whereNotIn('name', $lifecycleRoles)->get();
@@ -67,11 +67,11 @@ class UserRoleController extends Controller
             }
         }
 
-        // Preserve approved role — lifecycle roles are managed via approve/reject/suspend actions
-        $approvedRole = config('alumkit.roles.approved', 'approved');
+        // Preserve active role — lifecycle roles are managed via approve/reject/suspend actions
+        $activeRole = config('alumkit.roles.active', 'active');
 
-        if ($targetUser->hasRole($approvedRole)) {
-            $requestedRoles[] = $approvedRole;
+        if ($targetUser->hasRole($activeRole)) {
+            $requestedRoles[] = $activeRole;
         }
 
         $targetUser->syncRoles($requestedRoles);
@@ -89,7 +89,7 @@ class UserRoleController extends Controller
             config('alumkit.roles.pending', 'pending'),
             config('alumkit.roles.rejected', 'rejected'),
             config('alumkit.roles.suspended', 'suspended'),
-            config('alumkit.roles.approved', 'approved'),
+            config('alumkit.roles.active', 'active'),
         ];
 
         $keepRoles = $targetUser->roles
@@ -98,11 +98,11 @@ class UserRoleController extends Controller
             ->values()
             ->all();
 
-        $approvedRole = config('alumkit.roles.approved', 'approved');
-        $targetUser->syncRoles(array_merge($keepRoles, [$approvedRole]));
+        $activeRole = config('alumkit.roles.active', 'active');
+        $targetUser->syncRoles(array_merge($keepRoles, [$activeRole]));
 
         return redirect()->route('alumkit.users.index')
-            ->with('status', __('alumkit::dashboard.user_approved'));
+            ->with('status', __('alumkit::dashboard.user_activated'));
     }
 
     public function reject(string $user): RedirectResponse

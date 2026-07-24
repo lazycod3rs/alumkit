@@ -72,7 +72,7 @@ it('renders the dashboard for authenticated users', function () {
     $this->seed(AlumkitRolesAndPermissionsSeeder::class);
 
     $user = User::factory()->create();
-    $user->assignRole('approved');
+    $user->assignRole('active');
 
     $this->actingAs($user)
         ->get(route('alumkit.dashboard'))

@@ -18,7 +18,7 @@ return [
     'roles' => [
         'admin' => 'admin',
         'moderator' => 'moderator',
-        'approved' => 'approved',
+        'active' => 'active',
         'pending' => 'pending',
         'rejected' => 'rejected',
         'suspended' => 'suspended',

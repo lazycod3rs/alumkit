@@ -41,10 +41,10 @@ class AlumkitServiceProvider extends ServiceProvider
             $user = $request->user();
 
             if ($user) {
-                $approvedRole = config('alumkit.roles.approved', 'approved');
+                $activeRole = config('alumkit.roles.active', 'active');
                 $adminRole = config('alumkit.roles.admin', 'admin');
 
-                if (! $user->hasRole([$approvedRole, $adminRole])) {
+                if (! $user->hasRole([$activeRole, $adminRole])) {
                     return redirect()->route('alumkit.pending');
                 }
             }

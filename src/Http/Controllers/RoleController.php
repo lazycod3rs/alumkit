@@ -18,7 +18,7 @@ class RoleController extends Controller
     {
         $lifecycleRoles = [
             config('alumkit.roles.pending', 'pending'),
-            config('alumkit.roles.approved', 'approved'),
+            config('alumkit.roles.active', 'active'),
             config('alumkit.roles.rejected', 'rejected'),
             config('alumkit.roles.suspended', 'suspended'),
         ];

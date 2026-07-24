@@ -1,5 +1,5 @@
 @php
-    $approvedRole = config('alumkit.roles.approved', 'approved');
+    $activeRole = config('alumkit.roles.active', 'active');
     $adminRole = config('alumkit.roles.admin', 'admin');
     $pendingRole = config('alumkit.roles.pending', 'pending');
     $rejectedRole = config('alumkit.roles.rejected', 'rejected');
@@ -31,19 +31,19 @@
                 <tbody>
                     @foreach ($users as $u)
                         @php
-                            $isApproved = $u->hasRole($approvedRole) || $u->hasRole($adminRole);
+                            $isActive = $u->hasRole($activeRole) || $u->hasRole($adminRole);
                             $isPending = $u->hasRole($pendingRole);
                             $isRejected = $u->hasRole($rejectedRole);
                             $isSuspended = $u->hasRole($suspendedRole);
-                            $displayRoles = $u->roles->pluck('name')->reject(fn ($r) => in_array($r, [$approvedRole, $pendingRole, $rejectedRole, $suspendedRole]))->implode(', ');
+                            $displayRoles = $u->roles->pluck('name')->reject(fn ($r) => in_array($r, [$activeRole, $pendingRole, $rejectedRole, $suspendedRole]))->implode(', ');
                             $isSelf = Auth::id() === $u->id || Auth::id() == $u->getKey();
                         @endphp
                         <tr class="border-b dark:border-gray-700">
                             <td class="py-3 px-4 font-medium">{{ $u->email }}</td>
                             <td class="py-3 px-4">
-                                @if ($isApproved)
+                                @if ($isActive)
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                                        {{ __('alumkit::dashboard.status_approved') }}
+                                        {{ __('alumkit::dashboard.status_active') }}
                                     </span>
                                 @elseif ($isPending)
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
@@ -68,14 +68,14 @@
                             </td>
                             <td class="py-3 px-4 text-right whitespace-nowrap">
                                 @if (! $isSelf)
-                                    @if (! $isApproved)
+                                    @if ($isPending)
                                         <form method="POST" action="{{ route('alumkit.users.approve', $u) }}" class="inline">
                                             @csrf
                                             <x-button type="submit" size="sm" :text="__('alumkit::dashboard.approve')" />
                                         </form>
                                     @endif
 
-                                    @if ($isApproved)
+                                    @if ($isActive)
                                         <form method="POST" action="{{ route('alumkit.users.reject', $u) }}" class="inline">
                                             @csrf
                                             <x-button type="submit" size="sm" color="red" :text="__('alumkit::dashboard.reject')" />
@@ -87,7 +87,14 @@
                                         </form>
                                     @endif
 
-                                    @if ($isSuspended || $isRejected)
+                                    @if ($isSuspended)
+                                        <form method="POST" action="{{ route('alumkit.users.approve', $u) }}" class="inline">
+                                            @csrf
+                                            <x-button type="submit" size="sm" :text="__('alumkit::dashboard.reinstate')" />
+                                        </form>
+                                    @endif
+
+                                    @if ($isRejected)
                                         <form method="POST" action="{{ route('alumkit.users.approve', $u) }}" class="inline">
                                             @csrf
                                             <x-button type="submit" size="sm" :text="__('alumkit::dashboard.approve')" />
