@@ -18,7 +18,7 @@ class AlumkitUserSeeder extends Seeder
             return;
         }
 
-        $defaultRoles = config('permission.alumkit.default_roles', ['admin', 'moderator', 'member']);
+        $defaultRoles = config('permission.alumkit.default_roles', ['admin', 'moderator', 'approved']);
         $adminRole = $defaultRoles[0] ?? 'admin';
 
         try {

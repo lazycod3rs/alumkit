@@ -14,6 +14,7 @@ beforeEach(function () {
     $this->seed(DatabaseSeeder::class);
 
     $this->user = User::factory()->create();
+    $this->user->assignRole('approved');
 });
 
 it('renders the roles index for users with manage roles permission', function () {

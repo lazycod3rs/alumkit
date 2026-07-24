@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Alumkit\Alumkit\Database\Seeders\AlumkitRolesAndPermissionsSeeder;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
@@ -68,7 +69,10 @@ it('logs out and invalidates session', function () {
 });
 
 it('renders the dashboard for authenticated users', function () {
+    $this->seed(AlumkitRolesAndPermissionsSeeder::class);
+
     $user = User::factory()->create();
+    $user->assignRole('approved');
 
     $this->actingAs($user)
         ->get(route('alumkit.dashboard'))

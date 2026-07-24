@@ -10,7 +10,7 @@
 <body class="font-sans antialiased bg-gray-100 dark:bg-gray-900">
     <div class="min-h-screen flex">
         {{-- Sidebar --}}
-        <aside class="relative w-64 bg-white dark:bg-gray-800 shadow-md">
+        <aside class="flex flex-col w-64 min-h-screen bg-white dark:bg-gray-800 shadow-md">
             <div class="p-4">
                 <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
                     {{ config('app.name', 'AlumKit') }}
@@ -39,7 +39,7 @@
                 </a>
             </nav>
 
-            <div class="absolute bottom-0 w-64 p-4">
+            <div class="mt-auto p-4">
                 <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">
                     {{ Auth::user()->email }}
                 </p>
@@ -69,5 +69,6 @@
     </div>
     @tallStackUiScript
     @livewireScripts
+    @stack('scripts')
 </body>
 </html>

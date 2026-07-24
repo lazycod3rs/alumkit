@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Laravel\Fortify\Contracts\CreatesNewUsers;
+use Spatie\Permission\Models\Role;
 
 class CreateNewUser implements CreatesNewUsers
 {
@@ -31,9 +32,18 @@ class CreateNewUser implements CreatesNewUsers
         ])->validate();
 
         /** @var User */
-        return config('alumkit.auth.user_model')::create([
+        $user = config('alumkit.auth.user_model')::create([
             'email' => $input['email'],
             'password' => Hash::make($input['password']),
         ]);
+
+        $pendingRole = config('alumkit.roles.pending');
+
+        if ($pendingRole && Role::where('name', $pendingRole)->exists()) {
+            /** @phpstan-ignore method.notFound */
+            $user->assignRole($pendingRole);
+        }
+
+        return $user;
     }
 }

@@ -14,6 +14,7 @@ beforeEach(function () {
     $this->seed(DatabaseSeeder::class);
 
     $this->user = User::factory()->create();
+    $this->user->assignRole('approved');
     $this->targetUser = User::factory()->create();
 });
 
@@ -37,15 +38,15 @@ it('assigns roles to a user', function () {
     $this->user->givePermissionTo('manage members');
 
     Role::findOrCreate('admin');
-    Role::findOrCreate('member');
+    Role::findOrCreate('approved');
 
     $this->actingAs($this->user)
         ->put(route('alumkit.users.roles.update', $this->targetUser), [
-            'roles' => ['admin', 'member'],
+            'roles' => ['admin', 'approved'],
         ])
         ->assertRedirect(route('alumkit.users.roles.edit', $this->targetUser));
 
-    expect($this->targetUser->fresh()->roles->pluck('name')->toArray())->toBe(['admin', 'member']);
+    expect($this->targetUser->fresh()->roles->pluck('name')->toArray())->toBe(['admin', 'approved']);
 });
 
 it('removes roles from a user', function () {
@@ -53,9 +54,9 @@ it('removes roles from a user', function () {
     $this->user->givePermissionTo('manage members');
 
     Role::findOrCreate('admin');
-    Role::findOrCreate('member');
+    Role::findOrCreate('approved');
 
-    $this->targetUser->syncRoles(['admin', 'member']);
+    $this->targetUser->syncRoles(['admin', 'approved']);
 
     $this->actingAs($this->user)
         ->put(route('alumkit.users.roles.update', $this->targetUser), [
@@ -63,5 +64,5 @@ it('removes roles from a user', function () {
         ])
         ->assertRedirect(route('alumkit.users.roles.edit', $this->targetUser));
 
-    expect($this->targetUser->fresh()->roles->pluck('name')->toArray())->toBe(['admin']);
+    expect($this->targetUser->fresh()->roles->pluck('name')->toArray())->toBe(['admin', 'approved']);
 });

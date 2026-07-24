@@ -26,22 +26,21 @@ class AlumkitRolesAndPermissionsSeeder extends Seeder
             Permission::findOrCreate($permission);
         }
 
-        $defaultRoles = config('permission.alumkit.default_roles', ['admin', 'moderator', 'member']);
+        $roles = array_filter(config('alumkit.roles', []));
 
-        foreach ($defaultRoles as $roleName) {
+        foreach ($roles as $roleName) {
             Role::findOrCreate($roleName);
         }
 
-        $adminRole = Role::findByName($defaultRoles[0] ?? 'admin');
+        $adminRoleName = $roles['admin'] ?? 'admin';
+        $adminRole = Role::findByName($adminRoleName);
         $adminRole->givePermissionTo(Permission::all());
 
-        if (isset($defaultRoles[1])) {
-            $moderatorRole = Role::findByName($defaultRoles[1]);
-            $moderatorRole->givePermissionTo(['manage members', 'view dashboard']);
-        }
+        $moderatorRoleName = $roles['moderator'] ?? null;
 
-        if (isset($defaultRoles[2])) {
-            Role::findByName($defaultRoles[2]);
+        if ($moderatorRoleName) {
+            $moderatorRole = Role::findByName($moderatorRoleName);
+            $moderatorRole->givePermissionTo(['manage members', 'view dashboard']);
         }
     }
 }

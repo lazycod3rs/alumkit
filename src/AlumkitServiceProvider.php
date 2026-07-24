@@ -9,9 +9,12 @@ use Alumkit\Alumkit\Actions\Fortify\ResetUserPassword;
 use Alumkit\Alumkit\Actions\Fortify\UpdateUserPassword;
 use Alumkit\Alumkit\Actions\Fortify\UpdateUserProfileInformation;
 use Alumkit\Alumkit\Console\Commands\AlumkitCommand;
+use Illuminate\Contracts\Debug\ExceptionHandler;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Fortify\Fortify;
+use Spatie\Permission\Exceptions\UnauthorizedException;
 use Spatie\Permission\Middleware\PermissionMiddleware;
 use Spatie\Permission\Middleware\RoleMiddleware;
 use Spatie\Permission\Middleware\RoleOrPermissionMiddleware;
@@ -32,6 +35,22 @@ class AlumkitServiceProvider extends ServiceProvider
         $this->configureFortifyConfig();
 
         $this->registerMiddlewareAliases();
+
+        /** @param UnauthorizedException $e */
+        $this->app->make(ExceptionHandler::class)->renderable(function (UnauthorizedException $e, Request $request): ?RedirectResponse {
+            $user = $request->user();
+
+            if ($user) {
+                $approvedRole = config('alumkit.roles.approved', 'approved');
+                $adminRole = config('alumkit.roles.admin', 'admin');
+
+                if (! $user->hasRole([$approvedRole, $adminRole])) {
+                    return redirect()->route('alumkit.pending');
+                }
+            }
+
+            return null;
+        });
 
         $this->loadRoutesFrom(__DIR__.'/../routes/alumkit.php');
 

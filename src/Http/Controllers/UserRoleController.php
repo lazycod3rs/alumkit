@@ -29,7 +29,14 @@ class UserRoleController extends Controller
         $userModel = config('alumkit.auth.user_model', 'App\\Models\\User');
         $user = $userModel::findOrFail($user);
 
-        $roles = Role::all();
+        $lifecycleRoles = [
+            config('alumkit.roles.pending', 'pending'),
+            config('alumkit.roles.rejected', 'rejected'),
+            config('alumkit.roles.suspended', 'suspended'),
+            config('alumkit.roles.approved', 'approved'),
+        ];
+
+        $roles = Role::whereNotIn('name', $lifecycleRoles)->get();
 
         /** @var View $view */
         $view = view('alumkit::users.roles', compact('user', 'roles'));
@@ -50,19 +57,59 @@ class UserRoleController extends Controller
         $requestedRoles = $request->input('roles', []);
 
         // Prevent self-demotion: don't allow removing own admin role
-        if ($request->user()->getKey() === $targetUser->getKey()) {
-            $defaultRoles = config('permission.alumkit.default_roles', ['admin', 'moderator', 'member']);
-            $adminRole = $defaultRoles[0] ?? 'admin';
+        $adminRole = config('alumkit.roles.admin', 'admin');
 
+        if ($request->user()->getKey() === $targetUser->getKey()) {
             if ($targetUser->hasRole($adminRole) && ! in_array($adminRole, $requestedRoles)) {
                 return redirect()->route('alumkit.users.roles.edit', $targetUser)
                     ->with('error', __('alumkit::dashboard.cannot_remove_own_admin'));
             }
         }
 
+        // Preserve approved role — lifecycle roles are managed via approve/reject/suspend actions
+        $approvedRole = config('alumkit.roles.approved', 'approved');
+
+        if ($targetUser->hasRole($approvedRole)) {
+            $requestedRoles[] = $approvedRole;
+        }
+
         $targetUser->syncRoles($requestedRoles);
 
         return redirect()->route('alumkit.users.roles.edit', $targetUser)
             ->with('status', __('alumkit::dashboard.user_roles_updated'));
+    }
+
+    public function approve(string $user): RedirectResponse
+    {
+        $userModel = config('alumkit.auth.user_model', 'App\\Models\\User');
+        $targetUser = $userModel::findOrFail($user);
+
+        $approvedRole = config('alumkit.roles.approved', 'approved');
+        $targetUser->syncRoles([$approvedRole]);
+
+        return redirect()->route('alumkit.users.index')
+            ->with('status', __('alumkit::dashboard.user_approved'));
+    }
+
+    public function reject(string $user): RedirectResponse
+    {
+        $userModel = config('alumkit.auth.user_model', 'App\\Models\\User');
+        $targetUser = $userModel::findOrFail($user);
+
+        $targetUser->syncRoles([]);
+
+        return redirect()->route('alumkit.users.index')
+            ->with('status', __('alumkit::dashboard.user_rejected'));
+    }
+
+    public function suspend(string $user): RedirectResponse
+    {
+        $userModel = config('alumkit.auth.user_model', 'App\\Models\\User');
+        $targetUser = $userModel::findOrFail($user);
+
+        $targetUser->syncRoles([]);
+
+        return redirect()->route('alumkit.users.index')
+            ->with('status', __('alumkit::dashboard.user_suspended'));
     }
 }
