@@ -18,7 +18,7 @@
 
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    {{ __('alumkit::dashboard.select_permissions') }}
+                    {{ __('alumkit::dashboard.select_roles') }}
                 </label>
 
                 <div class="space-y-2">

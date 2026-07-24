@@ -68,6 +68,11 @@ class RoleController extends Controller
 
     public function destroy(Role $role): RedirectResponse
     {
+        if ($role->users()->exists()) {
+            return redirect()->route('alumkit.roles.index')
+                ->with('error', __('alumkit::dashboard.role_has_users'));
+        }
+
         $role->delete();
 
         return redirect()->route('alumkit.roles.index')

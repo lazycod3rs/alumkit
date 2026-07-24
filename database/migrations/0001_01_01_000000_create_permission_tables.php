@@ -1,9 +1,6 @@
 <?php
 
 declare(strict_types=1);
-
-namespace Alumkit\Alumkit\Tests;
-
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;

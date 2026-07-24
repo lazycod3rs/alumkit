@@ -12,11 +12,5 @@ parameters:
             message: '~expects view-string\|null, string given~'
             path: src/AlumkitServiceProvider.php
         -
-            message: '~expects view-string\|null, string given~'
-            path: src/Http/Controllers/*.php
-        -
-            message: '~Call to method syncRoles\(\) on an unknown class~'
-            path: src/Http/Controllers/*.php
-        -
-            message: '~PHPDoc tag @var for variable \$user has invalid type~'
-            path: src/Http/Controllers/*.php
+            identifier: larastan.noEnvCallsOutsideOfConfig
+            path: config/*.php
